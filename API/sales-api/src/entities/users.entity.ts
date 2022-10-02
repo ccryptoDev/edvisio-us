@@ -24,7 +24,7 @@ export class UserEntity extends BaseEntity {
   @Generated('uuid')
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()
@@ -92,6 +92,33 @@ export class UserEntity extends BaseEntity {
 
   @Column({ default: null, nullable: true})
   alternate_id: string;
+
+  @Column({ default: null, nullable: true})
+  phone_number: string;
+
+  @Column({ default: null, nullable: true})
+  alternate_phone_number: string;
+
+  @Column({ default: null, nullable: true})
+  driver_license: string;
+
+  @Column({ default: null, nullable: true})
+  driver_license_state_id: string;
+
+  @Column({ default: null, nullable: true})
+  address_1: string;
+
+  @Column({ default: null, nullable: true})
+  address_2: string;
+
+  @Column({ default: null, nullable: true})
+  city: string;
+  
+  @Column({ default: null, nullable: true})
+  zipcode: string;
+
+  @Column({ default: null })
+  state: string;
 
   @CreateDateColumn()
   createdAt: Date;
