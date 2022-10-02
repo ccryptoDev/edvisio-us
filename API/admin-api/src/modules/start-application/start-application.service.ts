@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, UseFilters } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from 'src/repository/users.repository';
 import { YourInfoDto } from './dto/yourInfo.dto';
@@ -27,6 +27,10 @@ import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
 import { config } from 'dotenv';
 import { SubmitDto } from './dto/loan.dto';
+import { AppAction, UpdateSchoolApplicationDto } from './dto/update-school-application.dto';
+import { CreateSchoolApplicationDto } from './dto/create-school-application.dto';
+import { SchoolUserEntity } from 'src/entities/schooluser.entity';
+import { SchoolUserRepository } from 'src/repository/schooluser.repository';
 config();
 
 export enum AssetsInfo {
@@ -47,6 +51,8 @@ export class StartApplicationService {
     private readonly studentInformationRepository: StudentinformationRepository,
     @InjectRepository(UserRepository)
     private readonly userRepository: UserRepository,
+    @InjectRepository(SchoolUserRepository)
+    private readonly schoolUserRepository: SchoolUserRepository,
     @InjectRepository(LoanRepository)
     private readonly loanRepository: LoanRepository,
     @InjectRepository(LogRepository)
@@ -1906,6 +1912,182 @@ export class StartApplicationService {
         statusCode: 500,
         message: [new InternalServerErrorException(error)['response']['name']],
         error: 'Bad Request',
+      };
+    }
+  }
+
+  /**
+   * Creates or Updates a Tuition Ease Loan requested from School Portal
+   * @param createSchoolAppDto 
+   * @param ip 
+   * @returns 
+   */
+  async createTuitionEase(createSchoolAppDto: CreateSchoolApplicationDto, ip) {
+    try {
+      let isUpdate = (createSchoolAppDto.loan_id)? true:false;
+      let entityManager = getManager();
+      let userEntity: UserEntity;
+      let loan: Loan;
+      let reviewPlan: ReviewPlanEntity;
+      let successMessage;
+      if(!isUpdate){
+        successMessage = "Successfully Created";
+        userEntity = new UserEntity();
+        loan = new Loan();
+        reviewPlan = new ReviewPlanEntity();
+      }else{
+        successMessage = "Successfully Updated";
+        loan = await this.loanRepository.findOne({
+          where: { id: createSchoolAppDto.loan_id, },
+        });
+        userEntity = await this.userRepository.findOne({
+          where: { id: loan.user_id, },
+        });
+        reviewPlan = await this.reviewPlanRepository.findOne({
+          where: {loan_id: createSchoolAppDto.loan_id}
+        });
+      }
+      
+      let email = await entityManager.query(
+        `select * from tbluser where email = '${createSchoolAppDto.email}'`,
+      );
+
+      if(isUpdate && createSchoolAppDto.email != userEntity.email && email.length>0)
+        throw new Error("Account already exists with the provided email");
+
+      if(!isUpdate && email.length> 0 )
+        throw new Error("Account already exists with the provided email");
+      
+      userEntity.firstName = createSchoolAppDto.firstName;
+      userEntity.middleName = createSchoolAppDto.middleName;
+      userEntity.lastName = createSchoolAppDto.lastName;
+      userEntity.email = createSchoolAppDto.email;
+      userEntity.socialSecurityNumber = createSchoolAppDto.ssn;
+      userEntity.birthday = createSchoolAppDto.birthday;
+      userEntity.driver_license_state_id = createSchoolAppDto.licenseState;
+      userEntity.driver_license = createSchoolAppDto.licenseNumber;
+      userEntity.mainInstallerId = createSchoolAppDto.schoolId;
+      userEntity.role = 2;
+      userEntity.active_flag = Flags.Y;
+      await this.userRepository.save(userEntity);
+
+      if(!isUpdate){
+        let schoolUser = new SchoolUserEntity();
+        schoolUser.user_id = userEntity.id;
+        schoolUser.school_id= createSchoolAppDto.schoolId;
+      }
+
+      loan.user_id = userEntity.id;
+      loan.step = 2;
+      loan.lastScreen = 'Personal Information';
+      loan.createdby = 'School';
+      loan.status_flag = StatusFlags.incompleteSchoolInitiated;
+      await this.loanRepository.save(loan);
+
+
+      reviewPlan.schoolid = createSchoolAppDto.schoolId;
+      reviewPlan.loan_id= loan.id;
+      reviewPlan.academic_schoolyear = createSchoolAppDto.academicProgram;
+      await this.reviewPlanRepository.save(reviewPlan);
+
+      let log = new LogEntity();
+      log.module = 'Personal Information posted by school. IP : ' + ip;
+      log.user_id = userEntity.id;
+      log.loan_id = loan.id;
+      await this.logRepository.save(log);
+
+      return {
+        statusCode: 200,
+        message: [successMessage],
+        loan_id: loan.id,
+      };
+      
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: error.message,
+        error: error.name,
+      };
+    }
+  }
+
+  
+  async updateTuitionEase(updateSchoolAppDto: UpdateSchoolApplicationDto, ip: string) {
+    try {
+      let isUpdate = (updateSchoolAppDto.loan_id)? false:false;
+      let userEntity: UserEntity;
+      let loan, successMessage;
+      let studentInfo: StudentInformationEntity;
+      if(!isUpdate){
+        successMessage = "Successfully Created";
+        studentInfo = new StudentInformationEntity();
+        loan = await this.loanRepository.findOne({
+          where: { id: updateSchoolAppDto.loan_id, },
+        });
+        userEntity = await this.userRepository.findOne({
+          where: { id: loan.user_id, },
+        });
+        console.log(userEntity);
+      }else{
+        successMessage = "Successfully Updated";
+      }
+      
+      userEntity.address_1 = updateSchoolAppDto.address_1;
+      userEntity.address_2 = updateSchoolAppDto.address_1;
+      userEntity.city = updateSchoolAppDto.city;
+      userEntity.state = updateSchoolAppDto.state;
+      userEntity.phone_number = updateSchoolAppDto.phone_number;
+      userEntity.alternate_phone_number = updateSchoolAppDto.phone_number_2;
+      await this.userRepository.save(userEntity);
+
+      studentInfo.loan_id = loan.id;
+      studentInfo.school_id = userEntity.mainInstallerId;
+      studentInfo.socialSecurityNumber = updateSchoolAppDto.ssn;
+      studentInfo.birthday = updateSchoolAppDto.birthday;
+      studentInfo.email = updateSchoolAppDto.email;
+      studentInfo.firstname = updateSchoolAppDto.firstName;
+      studentInfo.lastname = updateSchoolAppDto.lastName;
+      studentInfo.middlename = updateSchoolAppDto.middleName;
+      await this.studentInformationRepository.save(studentInfo);
+
+      switch(updateSchoolAppDto.action){
+        case AppAction.STUDENTCOMPLETE:
+          //Student Completes App. Use this option if you would like to bypass App Creation Screen 2 and have student complete. 
+          console.log('Just STUDENTCOMPLETE the changes') ;
+          loan.status_flag = StatusFlags.waiting;
+          loan.lastScreen = 'School Creation Screen 1';
+          break;
+        case AppAction.SCHOOLCOMPLETE:
+          //School Completes App. Use this option to complete all required fields on screen 2 on behalf of student.
+          console.log('Just SCHOOLCOMPLETE the changes') ;
+          loan.lastScreen = 'School Creation Screen 2';
+          loan.status_flag = StatusFlags.incomplete;
+          break;
+        default:
+          console.log('Just save the changes') ;
+          break;    
+      }
+      await this.loanRepository.save(loan);
+
+      let log = new LogEntity();
+      log.module = 'Personal Information posted by school. IP : ' + ip;
+      log.user_id = userEntity.id;
+      log.loan_id = updateSchoolAppDto.loan_id;
+      await this.logRepository.save(log);
+
+      return {
+        statusCode: 200,
+        message: [successMessage],
+        loan_id: loan.id,
+      };
+      
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: error.message,
+        error: error.name,
       };
     }
   }

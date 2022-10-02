@@ -20,6 +20,8 @@ import { EditStudentDetailsDto } from './dto/editstudentdetails.dto';
 import { YourInfoDto } from './dto/yourInfo.dto';
 import { SubmitDto } from './dto/loan.dto';
 import { Up_YourInfoDto } from './dto/yourinfo-reviewplan.dto';
+import { CreateSchoolApplicationDto } from './dto/create-school-application.dto';
+import { UpdateSchoolApplicationDto } from './dto/update-school-application.dto';
 
 // @ApiBearerAuth()
 // @Roles('school')
@@ -161,4 +163,25 @@ export class StartApplicationController {
   ) {
     return this.startApplicationService.editrtsdate(id, updateRtsDate);
   }
+
+  @Post('/tuitionEaseStep1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Starts TuitionEase Loan from School Portal' })
+  async createLoanTuitionEaseStep1(
+    @Body() createSchoolApplicationDto: CreateSchoolApplicationDto,
+    @RealIP() ip: string,
+  ) {
+    return this.startApplicationService.createTuitionEase(createSchoolApplicationDto, ip);
+  }
+
+  @Post('/tuitionEaseStep2')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Updates TuitionEase Loan from School Portal' })
+  async updateLoanTuitionEaseStep2(
+    @Body() updateSchoolApplicationDto: UpdateSchoolApplicationDto,
+    @RealIP() ip: string,
+  ) {
+    return this.startApplicationService.updateTuitionEase(updateSchoolApplicationDto, ip);
+  }
+
 }

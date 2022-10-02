@@ -25,6 +25,7 @@ import { OutsideService } from '../outside/outside.service';
 import { LoanRepository } from 'src/repository/loan.repository';
 import { StatusFlags } from 'src/entities/loan.entity';
 import { ApplicationSearchDto } from './dto/application-search.dto';
+import { UserEntity } from 'src/entities/users.entity';
 
 config();
 
@@ -1021,39 +1022,9 @@ export class LoanMasterService {
           error: 'Bad Request',
         };
 
-      let userSchools = await this.getUserSchools(userID, schoolID);
-      if (userSchools == undefined || userSchools.length == 0)
+      let query:string = await this.getSchoolLoansCommonQuery(userID, schoolID);
+      if(!query)
         return { statusCode: 204, data: {} };
-
-      let userSchoolsFilter = userSchools.length
-        ? "'" + userSchools.join("', '") + "'"
-        : '';
-
-      let query = `with school_loans as 
-      (SELECT
-        "l".*,
-        "s"."schoolName",
-        "rp"."academic_schoolyear",
-        "rp"."startDate" as period_start_date,
-        "rp"."endDate" as period_end_date,
-        "rp"."requested_amount",
-        "rp"."product"
-      FROM "tblloan" l 
-          inner join "tblreviewplan" rp on "l".id= "rp".loan_id 
-          inner join "tblmanageschools" s  on "s"."school_id" ="rp"."schoolid"
-      WHERE schoolid in (${userSchoolsFilter}) )
-      SELECT 
-      "sl".*,
-      CONCAT ("u"."firstName",' ',"u"."lastName") as borrower_name,
-      CONCAT ("st"."student_firstname",' ',"st"."student_lastname") as student_name,
-      "u"."socialSecurityNumber",
-      "u"."alternate_type_id",
-      "u"."alternate_id",
-      "u"."phone_number"
-      FROM "school_loans" "sl" 
-      INNER join "tbluser" "u" on "sl"."user_id" = "u"."id"
-      LEFT join "tblstudentpersonaldetails" "st" on "sl"."id" = "st"."loan_id" 
-      WHERE "sl"."id" is NOT NULL `;
 
       if (applicationID != undefined)
         query = query.concat(` AND "sl"."ref_no" = ${applicationID} `);
@@ -1061,7 +1032,6 @@ export class LoanMasterService {
       if (applicationUUID != undefined)
         query = query.concat(` AND "sl"."id" = '${applicationUUID}' `);
 
-      console.log(statusFlag);
       if (statusFlag != undefined)
         query = query.concat(` AND "sl"."status_flag" = '${statusFlag}' `);
 
@@ -1113,14 +1083,13 @@ export class LoanMasterService {
 
       query = query + ` ORDER BY "sl"."createdAt" `;
 
-      console.log(query);
       let data = await getManager().query(query);
 
       data.forEach(element => {
         delete element.signature;
       });
 
-      return { statusCode: 200, data };
+      return { statusCode: 200, count: data.length, data };
     } catch (error) {
       console.log(error);
       return {
@@ -1129,6 +1098,52 @@ export class LoanMasterService {
         error: 'Bad Request',
       };
     }
+  }
+
+  
+  async getSchoolLoansByStatus(userID: any, schoolID: string, status: string) {
+    try {
+      if (userID == undefined)
+        return {
+          statusCode: 500,
+          message: ['UserId required'],
+          error: 'Bad Request',
+        };
+
+      let query:string = await this.getSchoolLoansCommonQuery(userID, schoolID);
+      if(!query)
+        return { statusCode: 204, data: {} };
+
+      if (status == 'incomplete'){
+        query = query.concat(
+          ` AND "sl"."status_flag" = 'waiting' 
+            AND "sl"."createdby" ILIKE 'School'
+            AND "sl"."active_flag" = 'N' `);
+      } else if (status == 'certify') {        
+        query = query.concat(
+          ` AND "sl"."status_flag" = 'completed by student' 
+            AND "sl"."createdby" ILIKE 'Borrower'
+            AND "sl"."active_flag" = 'N' `);
+      }
+
+      query = query + ` ORDER BY "sl"."createdAt" `;
+
+      let data = await getManager().query(query);
+
+      data.forEach(element => {
+        delete element.signature;
+      });
+
+      return { statusCode: 200, count: data.length, data };
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
+      };
+    }
+
   }
 
   async getUserSchools(userID: string, schoolID?: string) {
@@ -1147,6 +1162,13 @@ export class LoanMasterService {
       userschools.push(element.school_id);
     });
 
+    let userEntity: UserEntity = await this.userRepository.findOne({
+      where: {id: userID}
+    });
+
+    if(userEntity && userEntity.mainInstallerId)
+      userschools.push(userEntity.mainInstallerId);
+      
     return userschools;
   }
 
@@ -1203,4 +1225,45 @@ export class LoanMasterService {
       };
     }
   }
+
+  async getSchoolLoansCommonQuery(userID: string, schoolID: string){
+    let userSchools = await this.getUserSchools(userID, schoolID);
+
+    if (userSchools == undefined || userSchools.length == 0)
+      return null;
+      
+    let userSchoolsFilter = userSchools.length
+      ? "'" + userSchools.join("', '") + "'"
+      : '';
+
+    let query = `with school_loans as 
+    (SELECT
+      "l".*,
+      "s"."schoolName",
+      "rp"."academic_schoolyear",
+      "rp"."startDate" as period_start_date,
+      "rp"."endDate" as period_end_date,
+      "rp"."requested_amount",
+      "rp"."product"
+    FROM "tblloan" l 
+        inner join "tblreviewplan" rp on "l".id= "rp".loan_id 
+        inner join "tblmanageschools" s  on "s"."school_id" ="rp"."schoolid"
+    WHERE schoolid in (${userSchoolsFilter}) )
+    SELECT 
+    "sl".*,
+    CONCAT ("u"."firstName",' ',"u"."lastName") as borrower_name,
+    CONCAT ("st"."student_firstname",' ',"st"."student_lastname") as student_name,
+    "u"."socialSecurityNumber",
+    "u"."alternate_type_id",
+    "u"."alternate_id",
+    "u"."phone_number"
+    FROM "school_loans" "sl" 
+    INNER join "tbluser" "u" on "sl"."user_id" = "u"."id"
+    LEFT join "tblstudentpersonaldetails" "st" on "sl"."id" = "st"."loan_id" 
+    WHERE "sl"."id" is NOT NULL `;
+
+    return query;
+  }
 }
+
+

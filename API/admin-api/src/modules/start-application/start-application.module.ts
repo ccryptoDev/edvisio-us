@@ -15,11 +15,13 @@ import { UploadUserDocumentRepository } from 'src/repository/userUploadDocument.
 import { CreditReportAuthRepository } from 'src/repository/creditreportauth.repository';
 import { CustomerRepository } from 'src/repository/customer.repository';
 import { MailService } from 'src/mail/mail.service';
+import { SchoolUserRepository } from 'src/repository/schooluser.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       UserRepository,
+      SchoolUserRepository,
       LoanRepository,
       LogRepository,
       ReviewPlanRepository,

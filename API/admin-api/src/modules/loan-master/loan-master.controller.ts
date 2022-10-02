@@ -123,6 +123,27 @@ export class LoanMasterController {
     );
   }
 
+  @ApiBearerAuth()
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.OK)
+  @Get('/school-loans/:status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get school applications available to school user' })
+  @ApiQuery({ name: 'school_id', required: false })
+  async getSchoolLoansByStatus(
+    @Headers() headers,
+    @Param('status') status: string,
+    @Query('school_id') schoolID?: string,
+  ) {
+    let userID = headers.userid;
+    return await this.loanMasterService.getSchoolLoansByStatus(
+      userID,
+      schoolID,
+      status
+    );
+  }
+
   //Get all
   @Get('/:status')
   @HttpCode(HttpStatus.OK)

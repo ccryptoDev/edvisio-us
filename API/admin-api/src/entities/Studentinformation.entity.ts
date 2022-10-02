@@ -56,6 +56,12 @@ export class StudentInformationEntity extends BaseEntity {
   alternate_phone: string;
 
   @Column({ default: null })
+  alternate_type_id: string;
+
+  @Column({ default: null })
+  alternate_id: string;
+
+  @Column({ default: null })
   address: string;
 
   @Column({ default: null })

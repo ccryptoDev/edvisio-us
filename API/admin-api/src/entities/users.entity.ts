@@ -97,6 +97,9 @@ export class UserEntity extends BaseEntity {
   phone_number: string;
 
   @Column({ default: null, nullable: true})
+  alternate_phone_number: string;
+
+  @Column({ default: null, nullable: true})
   driver_license: string;
 
   @Column({ default: null, nullable: true})
