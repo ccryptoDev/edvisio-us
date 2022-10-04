@@ -573,7 +573,7 @@ export class CreditApplicationService {
 
         //Alternate Number
         if (yourInfoDto.alternate_phone) {
-            studentInformationEntity.alternate_phone =
+          studentInformationEntity.alternate_phone =
             yourInfoDto.alternate_phone;
         }
 
@@ -1190,7 +1190,7 @@ export class CreditApplicationService {
       ref2_phone,
       ref2_relationship,
     } = referenceInfoDto;
-    
+
     if (ref2_firstname.trim().length == 0) {
       if (referenceInfo.ref1_firstname == ref2_firstname) {
         return {
@@ -1236,7 +1236,7 @@ export class CreditApplicationService {
         };
       }
     }
-    
+
     if (
       referenceInfo.ref1_email == ref2_email &&
       ref2_email.trim().length != 0 &&
@@ -3638,6 +3638,37 @@ export class CreditApplicationService {
         statusCode: 500,
         message: [new InternalServerErrorException(error)['response']['name']],
         error: error,
+      };
+    }
+  }
+
+  //Get Id
+  async widthdrawApplication(loanId: string, ip: string) {
+    try {
+      const entityManager = getManager();
+      let loan = await entityManager.query(
+        `select * from tblloan where id = '${loanId}'`,
+      );
+      console.log(loan);
+      if (loan.length > 0) {
+        await this.loanRepository.update(loanId, {
+          status_flag: StatusFlags.canceled,
+        });
+        let log = new LogEntity();
+        log.module = 'Loan cancelled by borrower. IP : ' + ip;
+        log.user_id = loan.user_id;
+        log.loan_id = loanId;
+        await this.logRepository.save(log);
+        return { statusCode: 200, message: ['Success'] };
+      } else {
+        return { statusCode: 400, message: ['Loan Id not exist'] };
+      }
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
       };
     }
   }

@@ -19,6 +19,7 @@ export enum StatusFlags {
   waiting = 'waiting',
   pending = 'pending',
   incomplete = 'incompleteInSchool',
+  incompleteSchoolInitiated = 'incompleteSchoolInitiated', 
   complete_by_student = 'completed by student',
   awaitingCosigner = 'awaiting cosigner',
   pendingBorrowerSign = 'pendingBorrowerSign',

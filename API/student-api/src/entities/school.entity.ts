@@ -60,6 +60,9 @@ export class ManageShoolEntity {
   @Column()
   masterSchool_name: string;
 
+  @Column({default: null})
+  masterSchool_id: string;
+
   @Column({ default: false })
   isPrivacyNotice: boolean;
 

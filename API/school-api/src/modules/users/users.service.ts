@@ -212,6 +212,7 @@ export class UsersService {
     user.middleName = createSchoolUserDto.middleName;
     user.lastName = createSchoolUserDto.lastName;
     user.role =  createSchoolUserDto.role || UsersRoleID.SCHOOL; //SCHOOL ROLE FOR NOW (SHOULD BE SCHOOL PORTAL USER)
+    user.mainInstallerId = createSchoolUserDto.school_id;
     
     try {
       const entityManager = getManager();

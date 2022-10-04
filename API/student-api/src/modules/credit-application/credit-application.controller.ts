@@ -3,10 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
-  UseGuards,
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
@@ -15,16 +12,12 @@ import {
   UploadedFiles,
   Put,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Headers } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { S3 } from 'aws-sdk';
 import { RealIp, RealIP } from 'nestjs-real-ip';
 import { extname } from 'path';
-import { RolesGuard } from 'src/guards/roles.guard';
 import { imageFileFilter } from '../uploads/uploads.controller';
-import { Roles } from '../users/users.controller';
 import { CreditApplicationService } from './credit-application.service';
 import {
   CosignerDto,
@@ -34,7 +27,6 @@ import {
 import { CreditReportAuthDto } from './dto/creditreportAuth.dto';
 import { EditRef1InfoDto } from './dto/EditRef1.dto';
 import { EditRef2InfoDto } from './dto/EditRef2.dto';
-import { EditStudentDetailsDto } from './dto/editstudentdetails.dto';
 import { EmploymentInfoDto } from './dto/employmentInfo.dto';
 import { CreateUploadDto, LoanDto, SubmitDto } from './dto/loan.dto';
 import { ReferenceInfoDto } from './dto/referenceInfo.dto';
@@ -619,14 +611,14 @@ export class CreditApplicationController {
     const rawData = await this.creditApplicationService.getConsent(filekey);
     let entityManager = getManager();
 
-    if(!school_id){
-      let schoolData= await entityManager.query(`select rp.schoolid 
+    if (!school_id) {
+      let schoolData = await entityManager.query(`select rp.schoolid 
       from tblloan l 
       inner join tblreviewplan rp 
       on l.id = rp.loan_id and rp.loan_id = '${loan_id}'`);
       school_id = schoolData[0].schoolid;
     }
-    
+
     let consentDoc = fs.readFileSync(
       `${filePath}/${rawData[0].fileName}.html`,
       {
@@ -641,7 +633,8 @@ export class CreditApplicationController {
         from tblpndetails t
         join tblmanageschools t2 on t2.pn_id = t.id 
         where t2.school_id = '${school_id}'
-    `);
+    `,
+      );
 
       let replaceData = [
         { find: '{{schoolName}}', replace: userData[0].pn_schoolName },
@@ -706,6 +699,17 @@ export class CreditApplicationController {
   @ApiOperation({ summary: 'Get User Consent Status' })
   async getUserConsentStatus(@Param('loan_id', ParseUUIDPipe) loan_id: string) {
     return this.creditApplicationService.getUserConsentStatus(loan_id);
+  }
+
+  // Verify Cosigner Details
+  @Post(`widthdrawApplication/:loan_id`)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Withdraw application' })
+  async withdrawApplication(
+    @Param('loan_id', ParseUUIDPipe) loan_id: string,
+    @RealIP() ip: string,
+  ) {
+    return this.creditApplicationService.widthdrawApplication(loan_id, ip);
   }
 
   dynamicString(replaceData: any, consentDoc: string): any {
