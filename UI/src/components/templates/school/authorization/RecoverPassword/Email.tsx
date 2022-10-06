@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { H3, Text } from "../../../../atoms/Typography";
 import { Button } from "../../../../atoms/Buttons/Regular";
-import EmailField from "../EmailField";
+import EmailField from "../../../../molecules/Controllers/Email/EmailField";
 import { validateEmail } from "../../../../../utils/validators/email";
 import { header, main, container } from "../styles";
 

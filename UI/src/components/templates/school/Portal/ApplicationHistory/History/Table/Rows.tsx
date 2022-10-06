@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { formatDate } from "../../../../../../../utils/formats";
 import { LinkButton } from "../../../../../../atoms/Buttons/Regular";
 import { ReactComponent as Chevron } from "../../../../../../../assets/svgs/chevron-down.svg";
+import Menu from "../../../../../../organisms/Menu/TableRow";
 
 const Link = styled(LinkButton)`
   text-transform: upperCase;
@@ -36,11 +37,23 @@ const Tr = styled.tr`
 `;
 
 const Rows = ({ items = [] }: any) => {
+  const [open, setOpen] = useState("");
+  const toggleMenu = (name: string) => {
+    if (name !== open) {
+      setOpen(name);
+    } else {
+      setOpen("");
+    }
+  };
+
   return (
     <tbody>
       {items.map(({ date, type, createdBy, link, id }: any) => {
+        const active = open === id;
         return (
           <Tr key={id}>
+            {" "}
+            <Menu active={active} onToggle={() => toggleMenu(id)} />
             <td>
               <div className="cell">{formatDate(date)}</div>
             </td>
@@ -51,6 +64,7 @@ const Rows = ({ items = [] }: any) => {
               <div className="cell border createdBy">
                 {createdBy}
                 <Link className="outlined" to={link}>
+                  {" "}
                   <Chevron />
                   View
                 </Link>

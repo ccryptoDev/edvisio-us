@@ -21,7 +21,7 @@ const Wrapper = styled.div`
 `;
 
 const SearchForm = ({ onChange }: any) => {
-  const { form, onChangeHandler } = useForm(() => initForm());
+  const { form, onChangeHandler } = useForm(initForm());
 
   const onSubmit = () => {
     const payload = parseFormToFormat(form);

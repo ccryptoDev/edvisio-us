@@ -10,6 +10,7 @@ export const userMock = {
   program: "24 months",
   dateCreated: "08/08/2022",
   dateUpdated: "08/08/2022",
+  periodStartDatetoEndDate: "240-53-2104",
   requestedAmount: "120000",
   approvedAmount: "120000",
   organization: "DemoSchool",

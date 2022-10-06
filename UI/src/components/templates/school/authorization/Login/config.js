@@ -1,4 +1,4 @@
-import EmailField from "../EmailField";
+import EmailField from "../../../../molecules/Controllers/Email/EmailField";
 import Password from "../../../../molecules/Controllers/Password/Placeholder-label";
 
 export const initForm = () => {

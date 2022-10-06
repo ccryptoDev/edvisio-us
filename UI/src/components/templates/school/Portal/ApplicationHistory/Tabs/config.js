@@ -33,5 +33,5 @@ export const tabs = [
     label: "Reference History",
     id: REFERENCE_HISTORY,
   },
-  { value: HISTORY, label: "histroy", id: HISTORY },
+  { value: HISTORY, label: "history", id: HISTORY },
 ];

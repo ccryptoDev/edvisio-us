@@ -15,7 +15,7 @@ export const menuList = ({ goTo, withdraw, print }) => [
   {
     icon: RefreshIcon,
     label: "Application History",
-    onClick: () => goTo(routes.ADMIN),
+    onClick: () => goTo(routes.ADMIN_APPLICATION_HISTORY),
   },
   {
     icon: PrinterIcon,
