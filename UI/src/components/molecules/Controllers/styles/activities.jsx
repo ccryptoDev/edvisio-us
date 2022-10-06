@@ -45,6 +45,7 @@ export const isFilled = css`
     & select,
     & textarea {
       border-color: var(--color-primary-green-1);
+      background: var(--color-gray-2);
     }
   }
 `;

@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import TextField from "../../../molecules/Controllers/TextField/Placeholder-label";
+import TextField from "../TextField/Placeholder-label";
 import { ReactComponent as Icon } from "../../../../assets/svgs/envelope.svg";
 
 const Wrapper = styled.div`

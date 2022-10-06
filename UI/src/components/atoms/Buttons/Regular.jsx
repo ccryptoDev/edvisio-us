@@ -49,9 +49,8 @@ export const button = css`
       color: var(--color-primary-green-2);
     }
 
-    &:disabled {
-      border: 1px solid var(--color-primary-gray-3);
-      color: var(--color-primary-gray-3);
+    & svg path {
+      fill: var(--color-primary-green-1);
     }
   }
 

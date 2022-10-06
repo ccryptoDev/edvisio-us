@@ -67,7 +67,7 @@ const dynamicLabelInput = css`
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus,
   select:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px #fff inset !important;
+    -webkit-box-shadow: 0 0 0 30px var(--color-bg-2) inset !important;
   }
 
   /* ON FIELD FOCUS */

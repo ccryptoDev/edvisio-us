@@ -6,8 +6,8 @@ export const Radio = ({ name, label, value, onChange, selected }: any) => {
   const checked = selected === value;
   return (
     <label>
-      <Wrapper>
-        <Root>
+      <Wrapper className="radio-button-wrapper">
+        <Root className="radio-button">
           <Input
             type="radio"
             name={name}
@@ -25,7 +25,7 @@ export const Radio = ({ name, label, value, onChange, selected }: any) => {
 
 const RadioGroup = ({ options, onChange, currentSelection, name }: any) => {
   return (
-    <RadioGroupWrapper>
+    <RadioGroupWrapper className="radioGroup">
       {options.map((opt: any) => {
         return (
           <Radio

@@ -9,6 +9,15 @@ const Wrapper = styled.label`
   font-weight: 700;
 `;
 
+export const requiredFieldLabel = (text: string) => {
+  return (
+    <>
+      {text}
+      <span style={{ color: "red" }}>*</span>
+    </>
+  );
+};
+
 const Component = ({ label = "", htmlFor = "" }: any) => {
   return (
     <Wrapper className="field-label" htmlFor={htmlFor}>
