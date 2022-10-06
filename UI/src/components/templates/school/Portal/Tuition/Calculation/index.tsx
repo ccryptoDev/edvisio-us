@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { Button } from "../../../../../../atoms/Buttons/Regular";
+import { Button } from "../../../../../atoms/Buttons/Regular";
+import { Subtitle as Heading, Text } from "../../../../../atoms/Typography";
+import { validateCalculation } from "./validation";
+import { mockRequest } from "../../../../../../utils/mockRequest";
+import Loading from "../../../../../molecules/Loaders/LoaderWrapper";
 import {
   repaymentCalculatorFormInit,
   repaymentInformation,
   repaymentTerms,
   repaymentTermsFormInit,
 } from "./config";
-import { Subtitle as Heading, Text } from "../../../../../../atoms/Typography";
-import { validateCalculation } from "./validation";
-import { mockRequest } from "../../../../../../../utils/mockRequest";
-import Loading from "../../../../../../molecules/Loaders/LoaderWrapper";
 
 const Calculator = () => {
   const [form, setForm] = useState(repaymentCalculatorFormInit());

@@ -1,11 +1,16 @@
 import React from "react";
 import styled from "styled-components";
 import SubmitButton from "../../../../molecules/Buttons/SubmitButton";
+import SaveAppBtn from "../../../../molecules/Buttons/SaveApplication";
 
 const Wrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 12px 24px;
+
+  .enterIcon path {
+    fill: var(--color-primary-green-1);
+  }
 `;
 
 const Footer = ({
@@ -13,24 +18,25 @@ const Footer = ({
   onSaveApplication,
   onSubmitFrom,
   loading,
+  disabled,
+  submitBtnTitle = "continue",
 }: any) => {
   return (
     <Wrapper>
-      <SubmitButton
+      <SaveAppBtn
         type="submit"
-        className="outlined"
         loading={savingApplication}
         onClick={onSaveApplication}
-      >
-        save application & Exit
-      </SubmitButton>
+      />
+
       <SubmitButton
         type="button"
+        disabled={disabled}
         onClick={onSubmitFrom}
         className="contained"
         loading={loading}
       >
-        continue
+        {submitBtnTitle}
       </SubmitButton>
     </Wrapper>
   );

@@ -17,7 +17,16 @@ const Wrapper = styled.div`
   }
 
   .application-information-form {
-    & .textField:nth-child(9) {
+    & .textField:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .applicant-address-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 12px 24px;
+    & .textField:first-child {
       grid-column: 1 / -1;
     }
   }
@@ -44,6 +53,12 @@ const Wrapper = styled.div`
     padding: 16px;
     border-radius: 4px;
     border: 1px solid var(--color-gray-3);
+  }
+
+  .credit-pull-approval-checkbox {
+    font-size: 12px;
+    color: var(--color-functional-red-1);
+    font-weight: 700;
   }
 `;
 
