@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UseFilters } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  UseFilters,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from 'src/repository/users.repository';
 import { YourInfoDto } from './dto/yourInfo.dto';
@@ -14,10 +19,10 @@ import { ReviewPlanEntity } from 'src/entities/reviewPlan.entity';
 import { StudentInformationEntity } from 'src/entities/Studentinformation.entity';
 import { SelfCertificatinRepository } from 'src/repository/selfcertification.repository';
 import { SelfCertificationEntity } from 'src/entities/selfCertification.entity';
-import { UpdatereferenceinfoRepository } from 'src/repository/updatereferenceinfo.repository';
+import { ReferenceinfoRepository } from 'src/repository/referenceinfo.repository';
 import { UpdateemploymentinfoRepository } from 'src/repository/updateemploymentinfo.repository';
 import { StudentinformationRepository } from 'src/repository/Studentapplication.repository';
-import { Updatereferenceinfo } from 'src/entities/updatereferenceinfo.entity';
+import { ReferenceInfoEntity } from 'src/entities/updatereferenceinfo.entity';
 import { CreditReportAuthRepository } from 'src/repository/creditreportauth.repository';
 import { UploadUserDocumentRepository } from 'src/repository/userUploadDocument.repository';
 
@@ -27,10 +32,20 @@ import * as bcrypt from 'bcrypt';
 import { MailService } from 'src/mail/mail.service';
 import { config } from 'dotenv';
 import { SubmitDto } from './dto/loan.dto';
-import { AppAction, UpdateSchoolApplicationDto } from './dto/update-school-application.dto';
-import { CreateSchoolApplicationDto } from './dto/create-school-application.dto';
+import {
+  AppAction,
+  UpdateSchoolApplicationDto,
+} from './dto/update-school-app.dto';
+import { CreateSchoolApplicationDto } from './dto/create-school-app.dto';
 import { SchoolUserEntity } from 'src/entities/schooluser.entity';
 import { SchoolUserRepository } from 'src/repository/schooluser.repository';
+import { CreateSchoolAppWithFinancialDto } from './dto/create-school-app-financial.dto';
+import { TuitionProductIDs } from 'src/common/utilities/common_utils';
+import { ManageSchoolRepository } from 'src/repository/manageSchool.repository';
+import { AcademicProgramsRepository } from 'src/repository/acdemicPrograms.repository';
+import { ReferenceInfoAudit } from 'src/entities/reference-info-audit.entity';
+import { ReferenceDto } from './dto/update-school-app-withref.dto';
+import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
 config();
 
 export enum AssetsInfo {
@@ -42,9 +57,8 @@ export enum AssetsInfo {
 @Injectable()
 export class StartApplicationService {
   constructor(
-    @InjectRepository(UpdatereferenceinfoRepository)
-    private readonly referenceInfoRepository: UpdatereferenceinfoRepository,
-
+    @InjectRepository(ReferenceinfoRepository)
+    private readonly referenceInfoRepository: ReferenceinfoRepository,
     @InjectRepository(UpdateemploymentinfoRepository)
     private readonly employmentInfoRepository: UpdateemploymentinfoRepository,
     @InjectRepository(StudentinformationRepository)
@@ -65,6 +79,10 @@ export class StartApplicationService {
     private readonly creditReportAuthRepository: CreditReportAuthRepository,
     @InjectRepository(UploadUserDocumentRepository)
     private readonly uploadUserDocumentRepository: UploadUserDocumentRepository,
+    @InjectRepository(ManageSchoolRepository)
+    private readonly manageSchoolRepository: ManageSchoolRepository,
+    @InjectRepository(SchoolAcademicProgramsRepository)
+    private readonly schoolAcademicProgramsRepository: SchoolAcademicProgramsRepository,
     private readonly mailService: MailService,
   ) {}
 
@@ -635,7 +653,7 @@ export class StartApplicationService {
   }
 
   async updateReferenceInfo(loan_id, referenceInfoDto: ReferenceInfoDto, ip) {
-    let referenceInfo = new Updatereferenceinfo();
+    let referenceInfo = new ReferenceInfoEntity();
     const {
       ref1_firstname,
       ref1_middlename,
@@ -1917,47 +1935,69 @@ export class StartApplicationService {
   }
 
   /**
-   * Creates or Updates a Tuition Ease Loan requested from School Portal
-   * @param createSchoolAppDto 
-   * @param ip 
-   * @returns 
+   * Creates or Updates a Tuition Loan requested from School Portal
+   * @param createSchoolAppDto
+   * @param ip
+   * @returns
    */
-  async createTuitionEase(createSchoolAppDto: CreateSchoolApplicationDto, ip) {
+  async createTuitionApplication(createSchoolAppDto, ip, productId) {
     try {
-      let isUpdate = (createSchoolAppDto.loan_id)? true:false;
+      let isUpdate = createSchoolAppDto.loan_id ? true : false;
+      let hasSelfCertInfo = createSchoolAppDto.costOfAttendance ? true : false;
       let entityManager = getManager();
       let userEntity: UserEntity;
       let loan: Loan;
       let reviewPlan: ReviewPlanEntity;
       let successMessage;
-      if(!isUpdate){
-        successMessage = "Successfully Created";
+      let selfcertEntity: SelfCertificationEntity;
+
+      //Check for Creation or Udpdate Loan
+      if (!isUpdate) {
+        successMessage = 'Successfully Created';
         userEntity = new UserEntity();
         loan = new Loan();
         reviewPlan = new ReviewPlanEntity();
-      }else{
-        successMessage = "Successfully Updated";
+        if (hasSelfCertInfo) selfcertEntity = new SelfCertificationEntity();
+      } else {
+        successMessage = 'Successfully Updated';
         loan = await this.loanRepository.findOne({
-          where: { id: createSchoolAppDto.loan_id, },
+          where: { id: createSchoolAppDto.loan_id },
         });
         userEntity = await this.userRepository.findOne({
-          where: { id: loan.user_id, },
+          where: { id: loan.user_id },
         });
         reviewPlan = await this.reviewPlanRepository.findOne({
-          where: {loan_id: createSchoolAppDto.loan_id}
+          where: { loan_id: createSchoolAppDto.loan_id },
         });
+
+        if (hasSelfCertInfo)
+          selfcertEntity = await this.selfCertificationRepository.findOne({
+            where: { loan_id: createSchoolAppDto.loan_id },
+          });
       }
-      
+
+      let schoolEntity = await this.manageSchoolRepository.findOne({
+        where: { school_id: createSchoolAppDto.schoolId },
+      });
+      let academicProgamEntity = await this.schoolAcademicProgramsRepository.findOne({
+        where: { id: createSchoolAppDto.academicProgramId },
+      });
+
+      //Check duplicate User
       let email = await entityManager.query(
         `select * from tbluser where email = '${createSchoolAppDto.email}'`,
       );
+      if (
+        isUpdate &&
+        createSchoolAppDto.email != userEntity.email &&
+        email.length > 0
+      )
+        throw new Error('Account already exists with the provided email');
 
-      if(isUpdate && createSchoolAppDto.email != userEntity.email && email.length>0)
-        throw new Error("Account already exists with the provided email");
+      if (!isUpdate && email.length > 0)
+        throw new Error('Account already exists with the provided email');
 
-      if(!isUpdate && email.length> 0 )
-        throw new Error("Account already exists with the provided email");
-      
+      //Set User Info
       userEntity.firstName = createSchoolAppDto.firstName;
       userEntity.middleName = createSchoolAppDto.middleName;
       userEntity.lastName = createSchoolAppDto.lastName;
@@ -1971,12 +2011,13 @@ export class StartApplicationService {
       userEntity.active_flag = Flags.Y;
       await this.userRepository.save(userEntity);
 
-      if(!isUpdate){
+      if (!isUpdate) {
         let schoolUser = new SchoolUserEntity();
         schoolUser.user_id = userEntity.id;
-        schoolUser.school_id= createSchoolAppDto.schoolId;
+        schoolUser.school_id = createSchoolAppDto.schoolId;
       }
 
+      //Set Loan Info
       loan.user_id = userEntity.id;
       loan.step = 2;
       loan.lastScreen = 'Personal Information';
@@ -1984,11 +2025,28 @@ export class StartApplicationService {
       loan.status_flag = StatusFlags.incompleteSchoolInitiated;
       await this.loanRepository.save(loan);
 
-
+      //Set Review Plan
+      reviewPlan.loan_id = loan.id;
+      reviewPlan.product = productId;
       reviewPlan.schoolid = createSchoolAppDto.schoolId;
-      reviewPlan.loan_id= loan.id;
-      reviewPlan.academic_schoolyear = createSchoolAppDto.academicProgram;
+      reviewPlan.schoolstate = schoolEntity.state;
+      //reviewPlan.academic_schoolyear = createSchoolAppDto.academicProgram;
+      reviewPlan.academic_schoolyear = academicProgamEntity.academic_program_name;
+      reviewPlan.requested_amount = createSchoolAppDto.costOfAttendance;
       await this.reviewPlanRepository.save(reviewPlan);
+
+      //Set Self Cert Info
+      if (hasSelfCertInfo) {
+        selfcertEntity.cost_of_attendance = createSchoolAppDto.costOfAttendance;
+        selfcertEntity.finance_assistance =
+          createSchoolAppDto.financialAssistance;
+        selfcertEntity.difference_amount =
+          createSchoolAppDto.costOfAttendance -
+          createSchoolAppDto.financialAssistance;
+        selfcertEntity.isagree = true;
+        selfcertEntity.loan_id = loan.id;
+        await this.selfCertificationRepository.save(selfcertEntity);
+      }
 
       let log = new LogEntity();
       log.module = 'Personal Information posted by school. IP : ' + ip;
@@ -2001,7 +2059,6 @@ export class StartApplicationService {
         message: [successMessage],
         loan_id: loan.id,
       };
-      
     } catch (error) {
       console.log(error);
       return {
@@ -2012,27 +2069,31 @@ export class StartApplicationService {
     }
   }
 
-  
-  async updateTuitionEase(updateSchoolAppDto: UpdateSchoolApplicationDto, ip: string) {
+  /**
+   * Creates or Address Infro a Student Info from School Portal
+   * @param updateSchoolAppDto
+   * @param ip
+   * @returns
+   */
+  async updateTuitionAddressAndStudent(updateSchoolAppDto, ip: string) {
     try {
-      let isUpdate = (updateSchoolAppDto.loan_id)? false:false;
       let userEntity: UserEntity;
       let loan, successMessage;
       let studentInfo: StudentInformationEntity;
-      if(!isUpdate){
-        successMessage = "Successfully Created";
-        studentInfo = new StudentInformationEntity();
-        loan = await this.loanRepository.findOne({
-          where: { id: updateSchoolAppDto.loan_id, },
-        });
-        userEntity = await this.userRepository.findOne({
-          where: { id: loan.user_id, },
-        });
-        console.log(userEntity);
-      }else{
-        successMessage = "Successfully Updated";
-      }
+      let referenceInfo: ReferenceInfoEntity;
       
+      if(updateSchoolAppDto.references && updateSchoolAppDto.references.length!=2){ 
+        throw new BadRequestException('2 References are required');
+      }
+
+      loan = await this.loanRepository.findOne({
+        where: { id: updateSchoolAppDto.loan_id },
+      });
+
+      //UPDATE User Info
+      userEntity = await this.userRepository.findOne({
+        where: { id: loan.user_id },
+      });
       userEntity.address_1 = updateSchoolAppDto.address_1;
       userEntity.address_2 = updateSchoolAppDto.address_1;
       userEntity.city = updateSchoolAppDto.city;
@@ -2041,7 +2102,14 @@ export class StartApplicationService {
       userEntity.alternate_phone_number = updateSchoolAppDto.phone_number_2;
       await this.userRepository.save(userEntity);
 
-      studentInfo.loan_id = loan.id;
+      //UPDATE Student Info
+      studentInfo = await this.studentInformationRepository.findOne({
+        where: { loan_id: updateSchoolAppDto.loan_id },
+      });
+      if (!studentInfo) {
+        studentInfo = new StudentInformationEntity();
+      }
+      studentInfo.loan_id = updateSchoolAppDto.loan_id;
       studentInfo.school_id = userEntity.mainInstallerId;
       studentInfo.socialSecurityNumber = updateSchoolAppDto.ssn;
       studentInfo.birthday = updateSchoolAppDto.birthday;
@@ -2051,22 +2119,31 @@ export class StartApplicationService {
       studentInfo.middlename = updateSchoolAppDto.middleName;
       await this.studentInformationRepository.save(studentInfo);
 
-      switch(updateSchoolAppDto.action){
+      //UPDATE Reference Info
+      if(updateSchoolAppDto.references){       
+        referenceInfo = await this.referenceInfoRepository.findOne({
+          where: { loan_id: updateSchoolAppDto.loan_id },
+        });
+        if (!referenceInfo) 
+          referenceInfo = new ReferenceInfoEntity();
+        await this.setReferenceInfo(referenceInfo, updateSchoolAppDto.references, updateSchoolAppDto.loan_id);
+      }
+
+      //UPDATE Loan Status Info
+      switch (updateSchoolAppDto.action) {
         case AppAction.STUDENTCOMPLETE:
-          //Student Completes App. Use this option if you would like to bypass App Creation Screen 2 and have student complete. 
-          console.log('Just STUDENTCOMPLETE the changes') ;
+          //Student Completes App. Use this option if you would like to bypass App Creation Screen 2 and have student complete.
           loan.status_flag = StatusFlags.waiting;
-          loan.lastScreen = 'School Creation Screen 1';
+          loan.lastScreen = 'School Creation Screen 2';
           break;
         case AppAction.SCHOOLCOMPLETE:
           //School Completes App. Use this option to complete all required fields on screen 2 on behalf of student.
-          console.log('Just SCHOOLCOMPLETE the changes') ;
           loan.lastScreen = 'School Creation Screen 2';
           loan.status_flag = StatusFlags.incomplete;
           break;
         default:
-          console.log('Just save the changes') ;
-          break;    
+          // console.log('Just save the changes');
+          break;
       }
       await this.loanRepository.save(loan);
 
@@ -2078,10 +2155,9 @@ export class StartApplicationService {
 
       return {
         statusCode: 200,
-        message: [successMessage],
+        message: ['Successfully Updated'],
         loan_id: loan.id,
       };
-      
     } catch (error) {
       console.log(error);
       return {
@@ -2090,5 +2166,50 @@ export class StartApplicationService {
         error: error.name,
       };
     }
+  }
+
+  checkDifReferenceError(value1: any, value2:any, key){
+    if(value1 == value2)
+      throw Error(`${key} '${value1}' should not be the same in the 2 references`);
+  }
+
+  async setReferenceInfo(referenceInfo: ReferenceInfoEntity, references: ReferenceDto[], loan_id) {
+
+    if(references.length!=2){
+      throw Error(`2 References are required`);
+    }
+    let ref1 = references[0];
+    let ref2 = references[1];
+
+    this.checkDifReferenceError(ref1.firstName, ref2.firstName, 'First name');
+    this.checkDifReferenceError(ref1.lastName, ref2.lastName, 'Last Name');
+    this.checkDifReferenceError(ref1.address, ref2.address, 'Address');
+    this.checkDifReferenceError(ref1.phoneNumber, ref2.phoneNumber, 'Phone Number');
+    this.checkDifReferenceError(ref1.email, ref2.email, 'Email');
+    
+    referenceInfo.ref1_firstname = ref1.firstName; //check
+    referenceInfo.ref1_middlename = ref1.middleName;
+    referenceInfo.ref1_lastname = ref1.lastName; //check
+    referenceInfo.ref1_address = ref1.address; //check
+    referenceInfo.ref1_city = ref1.city;
+    referenceInfo.ref1_state = ref1.state;
+    referenceInfo.ref1_zipcode = ref1.zipcode;
+    referenceInfo.ref1_phone = ref1.phoneNumber;//check
+    referenceInfo.ref1_email = ref1.email;//check
+    referenceInfo.ref1_relationship = ref1.relationship;
+    
+    referenceInfo.ref2_firstname = ref2.firstName; //check
+    referenceInfo.ref2_middlename = ref2.middleName;
+    referenceInfo.ref2_lastname = ref2.lastName; //check
+    referenceInfo.ref2_address = ref2.address; //check
+    referenceInfo.ref2_city = ref2.city;
+    referenceInfo.ref2_state = ref2.state;
+    referenceInfo.ref2_zipcode = ref2.zipcode;
+    referenceInfo.ref2_phone = ref2.phoneNumber;//check
+    referenceInfo.ref2_email = ref2.email;//check
+    referenceInfo.ref2_relationship = ref2.relationship;
+
+    referenceInfo.loan_id = loan_id;
+    await this.referenceInfoRepository.save(referenceInfo);
   }
 }

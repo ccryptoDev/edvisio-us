@@ -9,7 +9,7 @@ import { LogRepository } from 'src/repository/log.repository';
 import { ReviewPlanRepository } from 'src/repository/reviewPlan.repository';
 import { SelfCertificatinRepository } from 'src/repository/selfcertification.repository';
 import { StudentinformationRepository } from 'src/repository/Studentapplication.repository';
-import { UpdatereferenceinfoRepository } from 'src/repository/updatereferenceinfo.repository';
+import { ReferenceinfoRepository } from 'src/repository/referenceinfo.repository';
 import { UploadUserDocumentRepository } from 'src/repository/userUploadDocument.repository';
 import { CreditReportAuthRepository } from 'src/repository/creditreportauth.repository';
 import { CustomerRepository } from 'src/repository/customer.repository';
@@ -24,7 +24,7 @@ import { CustomerRepository } from 'src/repository/customer.repository';
       SelfCertificatinRepository,
       UpdateemploymentinfoRepository,
       StudentinformationRepository,
-      UpdatereferenceinfoRepository,
+      ReferenceinfoRepository,
       UploadUserDocumentRepository,
       CreditReportAuthRepository,
       CustomerRepository,

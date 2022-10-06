@@ -10,12 +10,14 @@ import { UserRepository } from 'src/repository/users.repository';
 import { LoanRepository } from 'src/repository/loan.repository';
 import { LogRepository } from 'src/repository/log.repository';
 import { UpdateemploymentinfoRepository } from 'src/repository/updateemploymentinfo.repository';
-import { UpdatereferenceinfoRepository } from 'src/repository/updatereferenceinfo.repository';
+import { ReferenceinfoRepository } from 'src/repository/referenceinfo.repository';
 import { UploadUserDocumentRepository } from 'src/repository/userUploadDocument.repository';
 import { CreditReportAuthRepository } from 'src/repository/creditreportauth.repository';
 import { CustomerRepository } from 'src/repository/customer.repository';
 import { MailService } from 'src/mail/mail.service';
 import { SchoolUserRepository } from 'src/repository/schooluser.repository';
+import { ManageSchoolRepository } from 'src/repository/manageSchool.repository';
+import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
 
 @Module({
   imports: [
@@ -28,10 +30,12 @@ import { SchoolUserRepository } from 'src/repository/schooluser.repository';
       SelfCertificatinRepository,
       UpdateemploymentinfoRepository,
       StudentinformationRepository,
-      UpdatereferenceinfoRepository,
+      ReferenceinfoRepository,
       UploadUserDocumentRepository,
       CreditReportAuthRepository,
       CustomerRepository,
+      ManageSchoolRepository,
+      SchoolAcademicProgramsRepository
     ]),
   ],
   controllers: [StartApplicationController],

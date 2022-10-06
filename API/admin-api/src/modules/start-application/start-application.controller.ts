@@ -20,8 +20,11 @@ import { EditStudentDetailsDto } from './dto/editstudentdetails.dto';
 import { YourInfoDto } from './dto/yourInfo.dto';
 import { SubmitDto } from './dto/loan.dto';
 import { Up_YourInfoDto } from './dto/yourinfo-reviewplan.dto';
-import { CreateSchoolApplicationDto } from './dto/create-school-application.dto';
-import { UpdateSchoolApplicationDto } from './dto/update-school-application.dto';
+import { CreateSchoolApplicationDto } from './dto/create-school-app.dto';
+import { UpdateSchoolApplicationDto } from './dto/update-school-app.dto';
+import { CreateSchoolAppWithFinancialDto } from './dto/create-school-app-financial.dto';
+import { TuitionProductIDs } from 'src/common/utilities/common_utils';
+import { UpdateSchoolAppWithReference } from './dto/update-school-app-withref.dto';
 
 // @ApiBearerAuth()
 // @Roles('school')
@@ -171,7 +174,7 @@ export class StartApplicationController {
     @Body() createSchoolApplicationDto: CreateSchoolApplicationDto,
     @RealIP() ip: string,
   ) {
-    return this.startApplicationService.createTuitionEase(createSchoolApplicationDto, ip);
+    return this.startApplicationService.createTuitionApplication(createSchoolApplicationDto, ip, TuitionProductIDs.TUITION_EASE);
   }
 
   @Post('/tuitionEaseStep2')
@@ -181,7 +184,37 @@ export class StartApplicationController {
     @Body() updateSchoolApplicationDto: UpdateSchoolApplicationDto,
     @RealIP() ip: string,
   ) {
-    return this.startApplicationService.updateTuitionEase(updateSchoolApplicationDto, ip);
+    return this.startApplicationService.updateTuitionAddressAndStudent(updateSchoolApplicationDto, ip);
+  }
+
+  @Post('/tuitionExtendStep1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Starts TuitionExtends Loan from School Portal' })
+  async createLoanTuitionExtendsStep1(
+    @Body() createSchoolApplicationDto: CreateSchoolAppWithFinancialDto,
+    @RealIP() ip: string,
+  ) {
+    return this.startApplicationService.createTuitionApplication(createSchoolApplicationDto, ip, TuitionProductIDs.TUITION_EXTENDS);
+  }
+
+  @Post('/tuitionExtendStep2')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Updates TuitionExtends Loan from School Portal' })
+  async updateLoanTuitionExtendsStep2(
+    @Body() updateSchoolApplicationDto: UpdateSchoolAppWithReference,
+    @RealIP() ip: string,
+  ) {
+    return this.startApplicationService.updateTuitionAddressAndStudent(updateSchoolApplicationDto, ip);
+  }
+
+  @Post('/tuitionFlexStep1')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Starts TuitionFlex Loan from School Portal' })
+  async createLoanTuitionFlexStep1(
+    @Body() createSchoolApplicationDto: CreateSchoolApplicationDto,
+    @RealIP() ip: string,
+  ) {
+    return this.startApplicationService.createTuitionApplication(createSchoolApplicationDto, ip, TuitionProductIDs.TUITION_FLEX);
   }
 
 }

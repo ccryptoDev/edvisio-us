@@ -8,7 +8,7 @@ import {
   Generated,
 } from 'typeorm';
 @Entity({ name: 'tblreferenceinfo' })
-export class Updatereferenceinfo extends BaseEntity {
+export class ReferenceInfoEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   ref_no: number;
 
