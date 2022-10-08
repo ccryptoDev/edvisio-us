@@ -4,7 +4,7 @@ import { H5 } from "../../../components/atoms/Typography";
 import Layout from "../../../layouts/school/Portal";
 import { routes } from "../../../routes/School/routes";
 import Card from "../../../components/atoms/Cards";
-import Step1 from "../../../components/templates/school/Portal/Tuition/Step1/Ease";
+import Step1 from "../../../components/templates/school/Portal/Tuition/Step1/Extend";
 import Step2 from "../../../components/templates/school/Portal/Tuition/Step2";
 import Stepper from "../../../components/organisms/Steppers/Simple";
 
@@ -23,7 +23,7 @@ const Wrapper = styled.div`
   }
 `;
 
-const TuitionEase = () => {
+const TuitionExtend = () => {
   const [step, setStep] = useState(1);
 
   const onStepChange = (st) => {
@@ -31,9 +31,9 @@ const TuitionEase = () => {
   };
 
   return (
-    <Layout currentRoute={routes.TUITION_EASE}>
+    <Layout currentRoute={routes.TUITION_EXTEND}>
       <Wrapper>
-        <H5>Start TuitionEase</H5>
+        <H5>Start TuitionExtend</H5>
         <Card className="table-wrapper-card">
           <Stepper step={step} onStepChange={onStepChange} />
           {step === 1 ? (
@@ -47,4 +47,4 @@ const TuitionEase = () => {
   );
 };
 
-export default TuitionEase;
+export default TuitionExtend;
