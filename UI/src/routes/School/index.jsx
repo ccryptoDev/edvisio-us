@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Switch, useParams } from "react-router-dom";
+import { Route, Switch } from "react-router-dom";
 import { routes as route } from "./routes";
 import Login from "../../pages/school/authorization/Login";
 import ForgotPassword from "../../pages/school/authorization/RecoverPassword";
@@ -14,13 +14,16 @@ import AllInclusiveReport from "../../pages/school/portal/Reports/All-inclusive"
 import Setup from "../../pages/school/portal/Setup";
 import Admin from "../../pages/school/portal/Admin/Admin";
 import AdminApplication from "../../pages/school/portal/Admin/ViewApplication";
-import CreditPullAuthorization from "../../pages/school/portal/TuitionEase";
+import CreditPullAuthorization from "../../pages/school/portal/CreditPullAuthorization";
 import IncompleteApplications from "../../pages/school/portal/IncompleteApplications";
+import TuitionFlex from "../../pages/school/portal/TuitionFlex";
+import TuitionEase from "../../pages/school/portal/TuitionEase";
+import TuitionExtend from "../../pages/school/portal/TuitionExtend";
+import AdminApplicationHistory from "../../pages/school/portal/Admin/AdminApplicationHistory";
 
 const Routes = () => {
-  const params = useParams();
   return (
-    <UserProvider applicationId={params.id}>
+    <UserProvider>
       <Switch>
         <Route path={route.LOGIN} exact component={Login} />
         <Route path={route.FORGOT_PASSWORD} exact component={ForgotPassword} />
@@ -45,6 +48,10 @@ const Routes = () => {
         />
         <Route path={route.SETUP} exact component={Setup} />
         <Route path={route.ADMIN} exact component={Admin} />
+        <Route path={route.TUITION_EASE} exact component={TuitionEase} />
+        <Route path={route.TUITION_FLEX} exact component={TuitionFlex} />
+        <Route path={route.TUITION_EXTEND} exact component={TuitionExtend} />
+        <Route path={route.ADMIN} exact component={Admin} />
         <Route
           path={route.CREDIT_PULL_AUTHORIZATION}
           exact
@@ -59,6 +66,11 @@ const Routes = () => {
           path={`${route.ADMIN_VIEW_APPLICATION}/:id`}
           exact
           component={AdminApplication}
+        />
+        <Route
+          path={`${route.ADMIN_APPLICATION_HISTORY}/:id`}
+          exact
+          component={AdminApplicationHistory}
         />
       </Switch>
     </UserProvider>
