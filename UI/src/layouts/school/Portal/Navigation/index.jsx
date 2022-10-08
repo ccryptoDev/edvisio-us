@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { ContainerMd as Container } from "../../Containers";
+import { ContainerMd as Container } from "../../../Containers";
 import { navItems } from "./config";
 
 const NavigationWrapper = styled.div`

@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import Header from "./Header";
-import { ContainerLg as Container } from "../Containers";
+import { ContainerLg as Container } from "../../Containers";
 import Navigation from "./Navigation";
 
 const Wrapper = styled.div`

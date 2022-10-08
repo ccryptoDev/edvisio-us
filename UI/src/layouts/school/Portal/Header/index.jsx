@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { ContainerLg as Container } from "../../Containers";
+import { ContainerLg as Container } from "../../../Containers";
 import { LinkButton } from "../../../../components/atoms/Buttons/Regular";
 import logo from "../../../../assets/svgs/logos/logo-tuition-flex.svg";
 import { routes } from "../../../../routes/School/routes";
@@ -34,9 +34,9 @@ const Wrapper = styled.div`
 `;
 
 const navigationButtons = [
-  { to: routes.SEARCH, label: "start tuitionflex" },
-  { to: routes.SEARCH, label: "start tuitionextend" },
-  { to: routes.SEARCH, label: "start tuitionease" },
+  { to: routes.TUITION_FLEX, label: "start tuitionflex" },
+  { to: routes.TUITION_EXTEND, label: "start tuitionextend" },
+  { to: routes.TUITION_EASE, label: "start tuitionease" },
   { to: routes.CREDIT_PULL_AUTHORIZATION, label: "credit pull authorization" },
 ];
 
