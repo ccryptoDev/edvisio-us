@@ -108,7 +108,7 @@ const CheckBoxContainer = ({
           }
         />
         <span className="checkmark" />
-        <div>{label}</div>
+        <div className="checkbox-label">{label}</div>
       </div>
     </Wrapper>
   );

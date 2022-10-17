@@ -7,6 +7,7 @@ const Btn = styled(Button)`
   display: flex;
   gap: 12px;
   justify-content: center;
+  height: 44px;
 
   &:disabled {
     cursor: not-allowed;

@@ -55,31 +55,13 @@ export class UsersService {
 
   async signIn(signinCreadentialsDto: SigninCreadentialsDto) {
     const { email, password } = signinCreadentialsDto;
-    console.log(password);
     try {
-      let entityManager = getManager();
-      // let user = await this.userRepository.findOne({
-      //   select: [
-      //     'id',
-      //     'email',
-      //     'firstName',
-      //     'lastName',
-      //     'role',
-      //     'password',
-      //     'active_flag',
-      //     'emailVerify',
-      //     'twoFactorAuth',
-      //     'mainInstallerId',
-      //   ],
-      //   where: { delete_flag: 'N', email: email },
-      // });
       let user = await this.userRepository.query(
         `select id, email, "firstName", "lastName", role, password, active_flag, "emailVerify", "twoFactorAuth","mainInstallerId" 
         from tbluser where delete_flag = 'N' 
         and email='${email}' 
         and (role =${UsersRoleID.CUSTOMER})`,
       );
-      console.log(user);
       if (user.length > 0) {
         if (await this.validatePassword(password, user[0].password)) {
           if (user[0].active_flag == 'Y') {
@@ -97,7 +79,6 @@ export class UsersService {
               let data = await this.loanRepository.query(
                 `select t.id as user_id, t2.id as loan_id from tbluser t join tblloan t2 on t2.user_id = t.id where t.email = '${email}'`,
               );
-              console.log(data);
 
               //check two factor auth
               if (user[0].twoFactorAuth == 'N') {
@@ -178,7 +159,7 @@ export class UsersService {
         };
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         statusCode: 500,
         message: [new InternalServerErrorException(error)['response']['name']],

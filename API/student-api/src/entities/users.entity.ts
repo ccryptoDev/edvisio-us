@@ -87,34 +87,34 @@ export class UserEntity extends BaseEntity {
   })
   twoFactorAuth: Flags;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   alternate_type_id: number;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   alternate_id: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   phone_number: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   alternate_phone_number: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   driver_license: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   driver_license_state_id: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   address_1: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   address_2: string;
 
-  @Column({ default: null, nullable: true})
+  @Column({ default: null, nullable: true })
   city: string;
-  
-  @Column({ default: null, nullable: true})
+
+  @Column({ default: null, nullable: true })
   zipcode: string;
 
   @Column({ default: null })

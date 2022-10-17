@@ -73,7 +73,7 @@ export const button = css`
 
     &:disabled {
       border: none;
-      color: var(--color-primary-gray-3);
+      color: var(--color-gray-3);
     }
   }
 
