@@ -1,5 +1,8 @@
 import SelectSchool from "./Select-school";
-import Consent from "./Consent";
+import ESignConsent from "./Consent";
+import CommunicationConsent from "./Communication";
+import CreditAuthorization from "./CreditAuthorization";
+import SolicitationDisclosure from "./SolicitationDisclosure";
 
 export const steps = () => [
   {
@@ -12,22 +15,29 @@ export const steps = () => [
   {
     active: false,
     completed: false,
-    label: "communication consent",
+    label: "e-sign disclosure and consent",
     number: 2,
-    component: Consent,
+    component: ESignConsent,
+  },
+  {
+    active: false,
+    completed: false,
+    label: "communication consent",
+    number: 3,
+    component: CommunicationConsent,
   },
   {
     active: false,
     completed: false,
     label: "credit authorization",
-    number: 3,
-    component: Consent,
+    number: 4,
+    component: CreditAuthorization,
   },
   {
     active: false,
     completed: false,
     label: "Solicitation Disclosure",
-    number: 4,
-    component: Consent,
+    number: 5,
+    component: SolicitationDisclosure,
   },
 ];

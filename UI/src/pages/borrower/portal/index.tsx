@@ -6,13 +6,16 @@ import Layout from "../../../layouts/borrower/Portal";
 // import { useUserData } from "../../../contexts/user";
 
 const Page = () => {
-  const { state } = useStepper();
+  const { state, moveToNextStep } = useStepper();
   const currentPage = state?.find((step: any) => step.active);
   const Component = currentPage?.component || <div />;
 
   return (
     <Layout steps={state}>
-      <Component isActive={currentPage.active} />
+      <Component
+        isActive={currentPage.active}
+        moveToNextStep={moveToNextStep}
+      />
     </Layout>
   );
 };
@@ -20,7 +23,7 @@ const Page = () => {
 const Component = () => {
   //   const { user } = useUserData();
   return (
-    <StepperProvider steps={() => steps()} initStep={1}>
+    <StepperProvider steps={() => steps()} initStep={5}>
       <Page />
     </StepperProvider>
   );

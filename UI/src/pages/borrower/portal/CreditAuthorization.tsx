@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import ESignConsent from "../../../components/templates/borrower/portal/EsignConsent";
+import Content from "../../../components/templates/borrower/portal/CreditAuthorization";
 import Checkbox from "../../../components/molecules/Controllers/CheckBox/Custom";
 import SaveButton from "../../../components/molecules/Buttons/SaveApplication";
 import { mockRequest } from "../../../utils/mockRequest";
@@ -21,7 +21,7 @@ const Wrapper = styled.div`
   }
 `;
 
-const Consent = ({
+const CommunicationConsent = ({
   isActive,
   moveToNextStep,
 }: {
@@ -48,11 +48,11 @@ const Consent = ({
   };
   return (
     <Wrapper>
-      <ESignConsent />
+      <Content />
       <Checkbox
         onChange={(e: any) => setAgree(e.target.value)}
         value={agree}
-        label="I agree to use electronic documents and signatures"
+        label="Continue"
       />
       <div className="buttons-wrapper">
         <SaveButton onClick={onSaveHandler} loading={saving} />
@@ -69,4 +69,4 @@ const Consent = ({
   );
 };
 
-export default Consent;
+export default CommunicationConsent;

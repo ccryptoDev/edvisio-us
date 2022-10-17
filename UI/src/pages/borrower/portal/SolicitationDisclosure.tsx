@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import ESignConsent from "../../../components/templates/borrower/portal/EsignConsent";
+import Content from "../../../components/templates/borrower/portal/SolicitationDisclosure";
 import Checkbox from "../../../components/molecules/Controllers/CheckBox/Custom";
 import SaveButton from "../../../components/molecules/Buttons/SaveApplication";
 import { mockRequest } from "../../../utils/mockRequest";
@@ -10,6 +10,7 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 70px;
+
   .checkbox-label {
     font-weight: 600;
     font-size: 14px;
@@ -21,7 +22,7 @@ const Wrapper = styled.div`
   }
 `;
 
-const Consent = ({
+const CommunicationConsent = ({
   isActive,
   moveToNextStep,
 }: {
@@ -48,11 +49,11 @@ const Consent = ({
   };
   return (
     <Wrapper>
-      <ESignConsent />
+      <Content />
       <Checkbox
         onChange={(e: any) => setAgree(e.target.value)}
         value={agree}
-        label="I agree to use electronic documents and signatures"
+        label="I agree to receive electronic communications including voice messages, text messages, email and other electronic messages"
       />
       <div className="buttons-wrapper">
         <SaveButton onClick={onSaveHandler} loading={saving} />
@@ -69,4 +70,4 @@ const Consent = ({
   );
 };
 
-export default Consent;
+export default CommunicationConsent;
