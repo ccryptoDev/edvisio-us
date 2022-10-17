@@ -57,9 +57,9 @@ const SignIn = () => {
   };
 
   return (
-    <Wrapper>
+    <Wrapper className="singIn-wrapper">
       <Heading className="heading">Already have an account? Log In</Heading>
-      <form className="container" onSubmit={onSubmit}>
+      <form onSubmit={onSubmit}>
         {renderFields(form).map(({ component: Component, ...field }) => {
           return (
             <div className="form-field" key={field.name}>
