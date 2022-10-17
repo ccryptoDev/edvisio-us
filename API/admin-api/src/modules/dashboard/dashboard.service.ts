@@ -17,7 +17,7 @@ import { UploadUserDocumentRepository } from 'src/repository/userUploadDocument.
 import { HolidayRepository } from 'src/repository/holiday.repository';
 import { max, maxLength } from 'class-validator';
 import e from 'express';
-import { searchApplicationDto } from './dto/searchapplication.dto';
+import { SearchApplicationDto } from './dto/search-application.dto';
 import { holidayDto } from './dto/holiday.dto';
 const ExcelJS = require('exceljs');
 const pupeetree = require('puppeteer');
@@ -516,18 +516,25 @@ left outer join tblcosignerinfo t5 on t5.loan_id = t3.id  where case
     }
   }
 
-  async searchApplication(user_id, search: searchApplicationDto) {
+  async searchApplication(
+    user_id: string,
+    school_id: string,
+    search: SearchApplicationDto,
+  ) {
     try {
-      let entityManager = getManager();
-
-      let query = `select distinct t.id as loan_id,t."createdAt" as createddate , t3."schoolName" as schoolname, t4.academic_schoolyear as academicprogram,
-       t4."startDate" as period_start_date, t4."endDate" as period_end_date, t.ref_no as app_id, t2.firstname as borrower_firstname,t2.lastname as borrower_lastname, 
-       t2.student_firstname as student_firstname, t2.student_middlename as student_middlename, t2.student_lastname as student_lastname, t2.student_ssn as student_ssn, t2."socialSecurityNumber" as borrower_ssn  from tblloan t 
+      const entityManager = getManager();
+      let query = `select distinct t.id as loan_id,t."createdAt" as created_at , t3."schoolName" as school_name, t4.academic_schoolyear as academic_program,
+       t4."startDate" as period_start_date, t4."endDate" as period_end_date, t.ref_no as appplication_id, t2.firstname as borrower_firstname,t2.lastname as borrower_lastname, 
+       t2.student_firstname as student_firstname, t2.student_middlename as student_middlename, t2.student_lastname as student_lastname, t2.student_ssn as student_ssn, 
+       t2.primary_phone as student_primary_phone, t6.cosigner_phone as cosigner_phone, t7.alternate_id_type as alternate_id_type, 
+       t7.alternate_id as alternate_id  
+       from tblloan t 
         left join tblstudentpersonaldetails t2 on t2.loan_id = t.id  
         left join tblmanageschools t3 on t3.school_id = t2.school_id 
         left join tblreviewplan t4 on t4.loan_id = t.id
         left join tblcosignerinfo t6 on t6.loan_id = t.id
-        where t.delete_flag = 'N' `;
+        left join tbluser t7 on t7.id = t.user_id
+        where t.delete_flag = 'N' and t3.school_id = '${school_id}'`;
       let firstName = '',
         middlename = '',
         lastname = '',
@@ -535,7 +542,9 @@ left outer join tblcosignerinfo t5 on t5.loan_id = t3.id  where case
         email = '',
         ssn = '',
         student_id = '',
-        phone = '';
+        phone = '',
+        alternate_id_type = '',
+        alternate_id = '';
 
       if (search.firstname) {
         firstName = `and (t2.firstname='${search.firstname}' or t2.student_firstname= '${search.firstname}' or t6.cosigner_firstname = '${search.firstname}') `;
@@ -562,6 +571,14 @@ left outer join tblcosignerinfo t5 on t5.loan_id = t3.id  where case
         phone = `and (t2.primary_phone='${search.phone}' or  t6.cosigner_phone = '${search.phone}')`;
       }
 
+      if (search.alternate_id_type) {
+        alternate_id_type = `and t7.alternate_id_type = '${search.alternate_id_type}' `;
+      }
+
+      if (search.alternate_id) {
+        alternate_id = `and t7.alternate_id = '${search.alternate_id}' `;
+      }
+
       let role_num = await entityManager.query(
         `select role from tbluser where id = '${user_id}'`,
       );
@@ -571,18 +588,26 @@ left outer join tblcosignerinfo t5 on t5.loan_id = t3.id  where case
           let data = await entityManager.query(
             `${query} ${firstName} ${middlename} ${lastname} ${application_id} ${email} ${ssn} ${student_id} ${phone}`,
           );
-          return { statusCode: 200, message: ['Success'], data: data };
+          return {
+            statusCode: 200,
+            message: ['Success'],
+            data: { rows: data || [], total: data ? data.length : 0 },
+          };
         } else if (role_num[0].role == 4) {
           let data = await entityManager.query(
             `${query} ${firstName} ${middlename} ${lastname} ${application_id} ${email} ${ssn} ${student_id} ${phone} and t3.user_id = '${user_id}'`,
           );
-          return { statusCode: 200, message: ['Success'], data: data };
+          return {
+            statusCode: 200,
+            message: ['Success'],
+            data: { rows: data || [], total: data ? data.length : 0 },
+          };
         }
       } else {
         return { statusCode: 400, message: ['Invalid User Id'] };
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         statusCode: 500,
         message: [new InternalServerErrorException(error)['response']['name']],

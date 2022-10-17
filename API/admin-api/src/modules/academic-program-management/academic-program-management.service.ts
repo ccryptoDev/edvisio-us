@@ -193,7 +193,7 @@ export class AcademicProgramManagementService {
         `select * from tblschoolacademicprograms where school_id = '${school_id}' and delete_flag='N'`,
       );
 
-      return { statusCode: 200, count: data.length, data: data };
+      return { statusCode: 200, total: data.length, data: data };
     } catch (error) {
       console.log(error);
       return {

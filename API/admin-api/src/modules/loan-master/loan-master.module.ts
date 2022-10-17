@@ -12,6 +12,9 @@ import { PaymentScheduleRepository } from 'src/repository/paymentSchedule.reposi
 import { OutsideService } from '../outside/outside.service';
 import { HttpModule } from '@nestjs/axios';
 import { LoanRepository } from 'src/repository/loan.repository';
+import { ReviewPlanRepository } from 'src/repository/reviewPlan.repository';
+import { SelfCertificatinRepository } from 'src/repository/selfcertification.repository';
+import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
 
 @Module({
   controllers: [LoanMasterController],
@@ -25,6 +28,9 @@ import { LoanRepository } from 'src/repository/loan.repository';
       CommentsRepository,
       LogRepository,
       LoanRepository,
+      ReviewPlanRepository,
+      SelfCertificatinRepository,
+      SchoolAcademicProgramsRepository
     ]),
   ],
   exports: [LoanMasterService],

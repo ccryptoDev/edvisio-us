@@ -12,14 +12,19 @@ import {
   Query,
   UsePipes,
   Req,
+  Patch,
+  ValidationPipe,
 } from '@nestjs/common';
 import { LoanMasterService } from './loan-master.service';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
   ApiHeader,
+  ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { RolesGuard, UsersRole } from '../../guards/roles.guard';
@@ -33,14 +38,17 @@ import { RealIP } from 'nestjs-real-ip';
 import { Headers } from '@nestjs/common';
 import { ApplicationSearchDto } from './dto/application-search.dto';
 import { Request } from 'express';
+import { PaymentCalcultionDto } from './dto/payment-calculation.dto';
+import { PaymentCalcultionResponseDto } from './dto/payment-calculation-response.dto';
+import { LoanUpdateDto } from './dto/loan.dto';
+import { SuccessResponseDto } from './dto/success-response.dto';
+import { ApplicationStatusValidationPipe } from './pipes/application-status-pipe';
 export const Roles = (...roles: string[]) => SetMetadata('role', roles);
 
 @ApiTags('Loan-master')
 @ApiBearerAuth()
-@Roles('admin')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('loan-master')
-@ApiBearerAuth()
 @ApiHeader({
   name: 'UserId',
 })
@@ -130,6 +138,26 @@ export class LoanMasterController {
   @Get('/school-loans/:status')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get school applications available to school user' })
+  @ApiParam({
+    name: 'status',
+    description:
+      'Status must be one of: certify, incomplete',
+    allowEmptyValue: false,
+    examples: {
+      a: {
+        summary: 'Incomplete applications',
+        description:
+          'The borrower has initiated the application process but has not yet submitted it.',
+        value: 'incomplete',
+      },
+      b: {
+        summary: 'Pending Certifications',
+        description:
+          'The borrower has completed the first portion of the application and submitted it. The school has not yet certified the application.',
+        value: 'certify',
+      },
+    },
+  })
   @ApiQuery({ name: 'school_id', required: false })
   async getSchoolLoansByStatus(
     @Headers() headers,
@@ -140,7 +168,7 @@ export class LoanMasterController {
     return await this.loanMasterService.getSchoolLoansByStatus(
       userID,
       schoolID,
-      status
+      status,
     );
   }
 
@@ -148,17 +176,65 @@ export class LoanMasterController {
   @Get('/:status')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL, UsersRole.CUSTOMER)
   @ApiOperation({ summary: 'GET_ALL' })
   async get(@Headers() headers, @Param('status') status: string) {
     let user_id = headers.userid;
     return this.loanMasterService.get(status, user_id);
   }
+
+  //Get all
+  @Get('getByStatus/:status')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UsersRole.ADMIN)
+  @ApiOperation({ summary: 'Get applicaitons by status' })
+  @ApiOperation({ description: 'This is the main Description of an Endpoint.' })
+  /// Request Documentation
+  @ApiParam({
+    name: 'status',
+    description:
+      'Status must be one of: pending_certification, incomplete, pending_esignature, certified or all',
+    allowEmptyValue: false,
+    examples: {
+      a: {
+        summary: 'Applications pending certification',
+        description: 'Approved application waiting certification',
+        value: 'pending_certification',
+      },
+      b: {
+        summary: 'Incomplete applications',
+        description: 'Applications started but not completed',
+        value: 'incomplete',
+      },
+      c: {
+        summary: 'Pending esignature',
+        description: 'Applications waiting for borrower or cosigner esignature',
+        value: 'pending_esignature',
+      },
+      d: {
+        summary: 'Processed School certifications',
+        description: 'All loans certified through the school portal.',
+        value: 'certified',
+      },
+      e: {
+        summary: 'Applications all-inclusive report',
+        description: 'All applications, all statuses',
+        value: 'all',
+      },
+    },
+  })
+  async getByStatus(
+    @Param('status', new ApplicationStatusValidationPipe()) status: string,
+  ) {
+    return this.loanMasterService.getByStatus(status);
+  }
+
   // Get Id
   @Get('/:status/:id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL, UsersRole.CUSTOMER)
   @ApiOperation({ summary: 'Get details' })
   async getdetails(
     @Param('status') status: string,
@@ -168,19 +244,33 @@ export class LoanMasterController {
   }
 
   @Get('/loan/details/:id')
-  @HttpCode(HttpStatus.OK)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL, UsersRole.CUSTOMER)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
   @ApiOperation({ summary: 'Get Loan details' })
   async getLoanDetails(@Param('id', ParseUUIDPipe) id: string) {
     return this.loanMasterService.getLoanById(id);
+  }
+
+  @Patch('/loan/details/:id')
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL)
+  @ApiOkResponse({
+    description: 'Updates loan succesfully',
+    type: SuccessResponseDto,  
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.'})
+  async patchLoan(
+    @Headers('UserId') userId,
+    @Body() loanDto: LoanUpdateDto,
+    @Param('id', ParseUUIDPipe) loanId: string,
+  ) {
+    return this.loanMasterService.editLoan(loanId, loanDto, userId);
   }
 
   //Document-Center
   @Get('/:status/:id/document-center')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL, UsersRole.CUSTOMER)
   @ApiOperation({ summary: 'Get document details' })
   async getdocuments(
     @Param('status') status: string,
@@ -191,7 +281,7 @@ export class LoanMasterController {
   @Get('/:status/:id/payment-schedule')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL, UsersRole.CUSTOMER)
   @ApiOperation({ summary: 'Get payemnt schedule details' })
   async getpaymentscheduledetails(
     @Param('status') status: string,
@@ -284,7 +374,7 @@ export class LoanMasterController {
   @Get('/pending/getcomments/:id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL, UsersRole.CUSTOMER)
   @ApiOperation({ summary: '' })
   async getcomments(@Param('id', ParseUUIDPipe) id: string) {
     return this.loanMasterService.getcomments(id);
@@ -342,16 +432,36 @@ export class LoanMasterController {
   @Put('certifiedApplication/:loan_id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL)
   @ApiOperation({ summary: 'Certify An Application' })
   async certifyApp(@Param('loan_id', ParseUUIDPipe) loan_id: string) {
     return this.loanMasterService.certifyApplication(loan_id);
   }
 
-  @Roles(UsersRole.ADMIN)
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL)
   @HttpCode(HttpStatus.OK)
   @Post('search')
   async search(@Body() applicationSearchDto: ApplicationSearchDto) {
     return this.loanMasterService.findSchoolLoans(applicationSearchDto);
   }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('application/:loan_id')
+  async getApplication(@Body() applicationSearchDto: ApplicationSearchDto) {
+    return this.loanMasterService.findSchoolLoans(applicationSearchDto);
+  }
+
+  @Roles(UsersRole.ADMIN, UsersRole.SUPER_ADMIN, UsersRole.SCHOOL)
+  @HttpCode(HttpStatus.OK)
+  @Post('paymentCalculation')
+  @ApiResponse({
+    status: 200,
+    description: 'Payment calculation',
+    type: PaymentCalcultionResponseDto,
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async paymentCalculation(@Body() paymentCalcultionDto: PaymentCalcultionDto) {
+    return this.loanMasterService.paymentCalculation(paymentCalcultionDto);
+  }
 }
+

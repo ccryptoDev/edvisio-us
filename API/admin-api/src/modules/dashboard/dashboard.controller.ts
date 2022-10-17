@@ -23,6 +23,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiParam,
+  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { RolesGuard } from '../../guards/roles.guard';
@@ -33,8 +34,9 @@ import { RealIP } from 'nestjs-real-ip';
 import { imageFileFilter } from '../files/files.controller';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { searchApplicationDto } from './dto/searchapplication.dto';
+import { SearchApplicationDto } from './dto/search-application.dto';
 import { holidayDto } from './dto/holiday.dto';
+import { SearchApplicationResponsePayloadDto } from './dto/search-application-response.dto';
 let fs = require('fs');
 
 export const Roles = (...roles: string[]) => SetMetadata('role', roles);
@@ -184,16 +186,20 @@ export class DashboardController {
     });
   }
 
-  @Post('/searchApplications')
+  @Post('/searchApplications/:school_id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Search Application' })
+  @ApiResponse({
+    status: 200,
+    type: SearchApplicationResponsePayloadDto,
+  })
   async searchApp(
-    @Body() search: searchApplicationDto,
-    //@Param('user_id', ParseUUIDPipe) user_id: string,
+    @Param('school_id') school_id: string,
+    @Body() search: SearchApplicationDto,
     @Headers() headers,
   ) {
     let user_id = headers.userid;
-    return this.dashboardService.searchApplication(user_id, search);
+    return this.dashboardService.searchApplication(user_id, school_id, search);
   }
 
   @Post('/holiday')

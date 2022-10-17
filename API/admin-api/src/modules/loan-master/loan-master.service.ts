@@ -25,7 +25,20 @@ import { OutsideService } from '../outside/outside.service';
 import { LoanRepository } from 'src/repository/loan.repository';
 import { StatusFlags } from 'src/entities/loan.entity';
 import { ApplicationSearchDto } from './dto/application-search.dto';
+import {
+  ApplicationStatusDto,
+  ApplicationStatusEnum,
+} from './dto/application-by-status.dto';
 import { UserEntity } from 'src/entities/users.entity';
+import { PaymentCalcultionDto } from './dto/payment-calculation.dto';
+import * as moment from 'moment';
+import { LoanUpdateDto } from './dto/loan.dto';
+import { ReviewPlanRepository } from 'src/repository/reviewPlan.repository';
+import { SelfCertificatinRepository } from 'src/repository/selfcertification.repository';
+import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
+import { SelfCertificationEntity } from 'src/entities/selfCertification.entity';
+import { ReviewPlanEntity } from 'src/entities/reviewPlan.entity';
+import { UsersRoleID } from 'src/guards/roles.guard';
 
 config();
 
@@ -46,6 +59,12 @@ export class LoanMasterService {
     private readonly customerRepository: CustomerRepository,
     @InjectRepository(PaymentScheduleRepository)
     private readonly paymentScheduleRepository: PaymentScheduleRepository,
+    @InjectRepository(ReviewPlanRepository)
+    private readonly reviewPlanRepository: ReviewPlanRepository,
+    @InjectRepository(SelfCertificatinRepository)
+    private readonly selfCertificationRepository: SelfCertificatinRepository,
+    @InjectRepository(SchoolAcademicProgramsRepository)
+    private readonly schoolAcademicProgramsRepository: SchoolAcademicProgramsRepository,
     private readonly mailService: MailService,
     private readonly outsideService: OutsideService,
   ) {}
@@ -223,6 +242,30 @@ export class LoanMasterService {
           error: 'Bad Request',
         };
       }
+    } catch (error) {
+      console.log(error);
+
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
+      };
+    }
+  }
+
+  //Get Id
+  async withdraw(loanId: string, userId: string, ip: string) {
+    const entityManager = getManager();
+    try {
+      await this.loanRepository.update(loanId, {
+        status_flag: StatusFlags.canceled,
+      });
+      let log = new LogEntity();
+      log.module = 'Loan cancelled by borrower. IP : ' + ip;
+      log.user_id = userId;
+      log.loan_id = loanId;
+      await this.logRepository.save(log);
+      return { statusCode: 200, message: ['Success'] };
     } catch (error) {
       console.log(error);
 
@@ -1022,9 +1065,11 @@ export class LoanMasterService {
           error: 'Bad Request',
         };
 
-      let query:string = await this.getSchoolLoansCommonQuery(userID, schoolID);
-      if(!query)
-        return { statusCode: 204, data: {} };
+      let query: string = await this.getSchoolLoansCommonQuery(
+        userID,
+        schoolID,
+      );
+      if (!query) return { statusCode: 204, data: {} };
 
       if (applicationID != undefined)
         query = query.concat(` AND "sl"."ref_no" = ${applicationID} `);
@@ -1089,7 +1134,7 @@ export class LoanMasterService {
         delete element.signature;
       });
 
-      return { statusCode: 200, count: data.length, data };
+      return { statusCode: 200, total: data.length, data };
     } catch (error) {
       console.log(error);
       return {
@@ -1100,7 +1145,6 @@ export class LoanMasterService {
     }
   }
 
-  
   async getSchoolLoansByStatus(userID: any, schoolID: string, status: string) {
     try {
       if (userID == undefined)
@@ -1110,20 +1154,24 @@ export class LoanMasterService {
           error: 'Bad Request',
         };
 
-      let query:string = await this.getSchoolLoansCommonQuery(userID, schoolID);
-      if(!query)
-        return { statusCode: 204, data: {} };
+      let query: string = await this.getSchoolLoansCommonQuery(
+        userID,
+        schoolID,
+      );
+      if (!query) return { statusCode: 204, data: {} };
 
-      if (status == 'incomplete'){
+      if (status == 'incomplete') {
         query = query.concat(
           ` AND "sl"."status_flag" = 'waiting' 
             AND "sl"."createdby" ILIKE 'School'
-            AND "sl"."active_flag" = 'N' `);
-      } else if (status == 'certify') {        
+            AND "sl"."active_flag" = 'N' `,
+        );
+      } else if (status == 'certify') {
         query = query.concat(
           ` AND "sl"."status_flag" = 'completed by student' 
             AND "sl"."createdby" ILIKE 'Borrower'
-            AND "sl"."active_flag" = 'N' `);
+            AND "sl"."active_flag" = 'N' `,
+        );
       }
 
       query = query + ` ORDER BY "sl"."createdAt" `;
@@ -1134,7 +1182,7 @@ export class LoanMasterService {
         delete element.signature;
       });
 
-      return { statusCode: 200, count: data.length, data };
+      return { statusCode: 200, total: data.length, data };
     } catch (error) {
       console.log(error);
       return {
@@ -1143,35 +1191,88 @@ export class LoanMasterService {
         error: 'Bad Request',
       };
     }
-
   }
 
-  async getUserSchools(userID: string, schoolID?: string) {
-    let query = `select school_id 
-    from tblschooluser
-    where user_id ='${userID}'
-    `;
+  /**
+   * Returns available schools for userId
+   * @param userId 
+   * @param schoolId 
+   * @returns 
+   */
+  async getUserSchools(userId: string, schoolId?: string) {
+    var allowedSchools = [];
+    let userEntity: UserEntity = await this.userRepository.findOne({
+      where: { id: userId },
+    });
 
-    if (schoolID != undefined) {
-      query = query.concat(` AND school_id = '${schoolID}' `);
+    //All Schools for Admin roles
+    if (
+      userEntity.role.toString() == UsersRoleID.ADMIN ||
+      userEntity.role.toString() == UsersRoleID.SUPER_ADMIN
+    ) {
+      if (schoolId) allowedSchools.push(schoolId);
+      else {
+        let allSchools = `SELECT school_id FROM tblmanageschools`;
+        let adminData = await getManager().query(allSchools);
+        adminData.forEach(element => {
+          allowedSchools.push(element.school_id);
+        });
+      }
     }
 
-    let data = await getManager().query(query);
-    var userschools = [];
+    //Filter School for Other roles
+    if (userEntity.mainInstallerId)
+      allowedSchools.push(userEntity.mainInstallerId);
+
+    let queryAllowed = `select school_id 
+    from tblschooluser
+    where user_id ='${userId}'
+    `;
+    if (schoolId != undefined) {
+      queryAllowed = queryAllowed.concat(` AND school_id = '${schoolId}' `);
+    }
+    let data = await getManager().query(queryAllowed);
     data.forEach(element => {
-      userschools.push(element.school_id);
+      allowedSchools.push(element.school_id);
     });
 
-    let userEntity: UserEntity = await this.userRepository.findOne({
-      where: {id: userID}
-    });
-
-    if(userEntity && userEntity.mainInstallerId)
-      userschools.push(userEntity.mainInstallerId);
-      
-    return userschools;
+    return allowedSchools;
   }
 
+  async getSchoolLoansCommonQuery(userID: string, schoolID: string) {
+    let userSchools = await this.getUserSchools(userID, schoolID);
+    if (userSchools == undefined || userSchools.length == 0) return null;
+
+    let userSchoolsFilter = userSchools.length
+      ? "'" + userSchools.join("', '") + "'"
+      : '';
+    let query = `with school_loans as 
+    (SELECT
+      "l".*,
+      "s"."schoolName",
+      "rp"."academic_schoolyear",
+      "rp"."startDate" as period_start_date,
+      "rp"."endDate" as period_end_date,
+      "rp"."requested_amount",
+      "rp"."product"
+    FROM "tblloan" l 
+        inner join "tblreviewplan" rp on "l".id= "rp".loan_id 
+        inner join "tblmanageschools" s  on "s"."school_id" ="rp"."schoolid"
+    WHERE schoolid in (${userSchoolsFilter}) )
+    SELECT 
+    "sl".*,
+    CONCAT ("u"."firstName",' ',"u"."lastName") as borrower_name,
+    CONCAT ("st"."student_firstname",' ',"st"."student_lastname") as student_name,
+    "u"."socialSecurityNumber",
+    "u"."alternate_type_id",
+    "u"."alternate_id",
+    "u"."phone_number"
+    FROM "school_loans" "sl" 
+    INNER join "tbluser" "u" on "sl"."user_id" = "u"."id"
+    LEFT join "tblstudentpersonaldetails" "st" on "sl"."id" = "st"."loan_id" 
+    WHERE "sl"."id" is NOT NULL `;
+    return query;
+  }
   /**
    * Gets Loans from schools available to the user (header.userid)
    * @param search
@@ -1226,44 +1327,184 @@ export class LoanMasterService {
     }
   }
 
-  async getSchoolLoansCommonQuery(userID: string, schoolID: string){
-    let userSchools = await this.getUserSchools(userID, schoolID);
+  async getByStatus(status: string) {
+    const entityManager = getManager();
+    try {
+      let rawData = '';
+      let common_query_forschool = `select t.id as loan_id, 
+          t.user_id as user_id, 
+          t.ref_no as loan_ref, t2.email as email, 
+          t2.ref_no as user_ref, t2."firstName" as firstName,
+          t2."lastName" as lastName
+            from tblloan t 
+            join tbluser t2 on t2.id = t.user_id
+            join tblstudentpersonaldetails t3 on t3.user_id = t.user_id
+             where t.delete_flag = 'N' and `;
+      if (status == ApplicationStatusEnum.PENDING_CERTIFICATION) {
+        rawData = await entityManager.query(`${common_query_forschool} t.active_flag = 'Y' 
+            and t.status_flag = 'pending'
+            order by t."createdAt" desc `);
+      } else if (status == ApplicationStatusEnum.INCOMPLETE) {
+        rawData = await entityManager.query(`${common_query_forschool} t2.delete_flag = 'N' and t.active_flag = 'N' 
+          and t.status_flag = 'waiting' 
+          order by t."createdAt" desc `);
+      } else if (status == ApplicationStatusEnum.PENDING_ESIGNATURE) {
+        rawData = rawData = await entityManager.query(`${common_query_forschool} t.active_flag = 'Y' 
+          and (t.status_flag = 'pendingBorrowerSign' or t.status_flag = 'pendingBorrowerSign')
+          order by t."createdAt" desc `);
+      } else if (status == ApplicationStatusEnum.ALL) {
+        rawData = await entityManager.query(`${common_query_forschool} t.active_flag = 'Y' 
+          order by t."createdAt" desc `);
+      }
+      return { statusCode: 200, data: rawData };
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
+      };
+    }
+  }
 
-    if (userSchools == undefined || userSchools.length == 0)
-      return null;
-      
-    let userSchoolsFilter = userSchools.length
-      ? "'" + userSchools.join("', '") + "'"
-      : '';
+  async paymentCalculation(paymentCalcultionDto: PaymentCalcultionDto) {
+    try {
+      const entityManager = await getManager();
+      const result = await entityManager.query(
+        `select * from tblschoolconfiguration where school_id = '${paymentCalcultionDto.schoolId}' 
+        and productid = ${paymentCalcultionDto.productId}`,
+      );
 
-    let query = `with school_loans as 
-    (SELECT
-      "l".*,
-      "s"."schoolName",
-      "rp"."academic_schoolyear",
-      "rp"."startDate" as period_start_date,
-      "rp"."endDate" as period_end_date,
-      "rp"."requested_amount",
-      "rp"."product"
-    FROM "tblloan" l 
-        inner join "tblreviewplan" rp on "l".id= "rp".loan_id 
-        inner join "tblmanageschools" s  on "s"."school_id" ="rp"."schoolid"
-    WHERE schoolid in (${userSchoolsFilter}) )
-    SELECT 
-    "sl".*,
-    CONCAT ("u"."firstName",' ',"u"."lastName") as borrower_name,
-    CONCAT ("st"."student_firstname",' ',"st"."student_lastname") as student_name,
-    "u"."socialSecurityNumber",
-    "u"."alternate_type_id",
-    "u"."alternate_id",
-    "u"."phone_number"
-    FROM "school_loans" "sl" 
-    INNER join "tbluser" "u" on "sl"."user_id" = "u"."id"
-    LEFT join "tblstudentpersonaldetails" "st" on "sl"."id" = "st"."loan_id" 
-    WHERE "sl"."id" is NOT NULL `;
+      if (!result || result.length === 0) {
+        throw new Error('School configuration not found.');
+      }
 
-    return query;
+      const { interestRate, inSchoolPayAmount_min } = result[0];
+      const monthlyInterestRate = interestRate / 12;
+      const termInYears = paymentCalcultionDto.repayment / 12;
+      const interestAmount =
+        interestRate * paymentCalcultionDto.requestedAmount * termInYears;
+      const apr =
+        interestAmount / paymentCalcultionDto.requestedAmount / termInYears;
+
+      // Formula: c * [pow(1 + i)n * i/pow(1 + i)n - 1]
+      const part1 =
+        Math.pow(1 + monthlyInterestRate, paymentCalcultionDto.repayment) *
+        monthlyInterestRate;
+      const part2 =
+        Math.pow(1 + monthlyInterestRate, paymentCalcultionDto.repayment) - 1;
+      const part3 = part1 / part2;
+      const installment = paymentCalcultionDto.requestedAmount * part3;
+      return {
+        statusCode: 200,
+        data: {
+          apr,
+          interestRate,
+          inSchoolPayment: inSchoolPayAmount_min,
+          afterSchoolPayment: installment.toFixed(2),
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
+      };
+    }
+  }
+
+  async editLoan(loanId, loanUpdateDto: LoanUpdateDto, userId) {
+    try {
+      const loan = await this.loanRepository.findOneOrFail({
+        where: { id: loanId },
+      });
+
+      if (!loan) {
+        throw Error(`Loan Id doesn't exists`);
+      }
+
+      //Review Plan
+      let reviewPlan = await this.reviewPlanRepository.findOne({
+        where: { loan_id: loan.id },
+      });
+
+      if (!reviewPlan) {
+        reviewPlan = new ReviewPlanEntity();
+        reviewPlan.loan_id = loanId;
+      }
+      if (loanUpdateDto.graduationDate)
+        reviewPlan.graudiation_date = loanUpdateDto.graduationDate;
+
+      if (loanUpdateDto.releaseToServicingDate)
+        reviewPlan.release_to_servicing_date = loanUpdateDto.releaseToServicingDate.toString();
+
+      if (loanUpdateDto.academicProgram) {
+        let academicProgrameEntity = await this.schoolAcademicProgramsRepository.findOne(
+          {
+            where: {
+              id: loanUpdateDto.academicProgram,
+              school_id: reviewPlan.schoolid,
+            },
+          },
+        );
+        reviewPlan.academic_schoolyear =
+          academicProgrameEntity.academic_program_name;
+      }
+
+      if (loanUpdateDto.academicProgramStart)
+        reviewPlan.startDate = loanUpdateDto.academicProgramStart;
+
+      if (loanUpdateDto.academicProgramEnd)
+        reviewPlan.endDate = loanUpdateDto.academicProgramEnd;
+
+      if (loanUpdateDto.tuitionAmount)
+        reviewPlan.requested_amount = loanUpdateDto.tuitionAmount;
+
+      if (loanUpdateDto.loanTerm)
+        reviewPlan.installment_terms = loanUpdateDto.loanTerm.toString();
+
+      this.reviewPlanRepository.save(reviewPlan);
+
+      //Self Cert
+      let selfCert = await this.selfCertificationRepository.findOne({
+        where: { loan_id: loan.id },
+      });
+      if (!selfCert) {
+        selfCert = new SelfCertificationEntity();
+        selfCert.loan_id = loanId;
+        selfCert.cost_of_attendance = 0;
+        selfCert.finance_assistance = 0;
+      }
+      if (loanUpdateDto.costOfAttendance) {
+        selfCert.cost_of_attendance = loanUpdateDto.costOfAttendance;
+      }
+      if (loanUpdateDto.costOfAttendance === 0) {
+        selfCert.cost_of_attendance = loanUpdateDto.costOfAttendance;
+      }
+
+      if (loanUpdateDto.financialAssistance) {
+        selfCert.finance_assistance = loanUpdateDto.financialAssistance;
+      }
+      if (loanUpdateDto.financialAssistance === 0) {
+        selfCert.finance_assistance = loanUpdateDto.financialAssistance;
+      }
+
+      selfCert.difference_amount =
+        selfCert.cost_of_attendance - selfCert.finance_assistance;
+
+      this.selfCertificationRepository.save(selfCert);
+
+      return {
+        statusCode: 200,
+        message: ['Loan Updated Succesfully'],
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
+      };
+    }
   }
 }
-
-
