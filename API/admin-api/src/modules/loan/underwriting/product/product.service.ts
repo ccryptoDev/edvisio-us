@@ -43,11 +43,11 @@ export class ProductService {
     });
 
     const result = {
+      loanApproved:true,
       approvedRuleMsg: [],
       declinedRuleMsg: [],
       ruleApprovals: {},
       ruleData: underwritinRuleSet,
-      loanApproved:true
     };
 
     underwritinRuleSet.forEach(ruleConfig => {
@@ -82,12 +82,12 @@ export class ProductService {
     return result;
   }
 
-  async getUndewritingId(loanID) {
+  async getUndewritingId(loanId) {
     const entityManager = getManager();
     const rawData = await entityManager.query(
       `select "rp"."schoolid",  "rp"."product", "uw"."id" as "undewriting_id"
         from "tblloan" l 
-        inner join "tblreviewplan" rp on "l".id = "rp".loan_id and "l"."id" ='${loanID}'
+        inner join "tblreviewplan" rp on "l".id = "rp".loan_id and "l"."id" ='${loanId}'
         inner join "tblunderwriting" uw on "uw"."school_id" = "rp"."schoolid" and "rp"."product" = "uw"."product_id" `,
     );
 

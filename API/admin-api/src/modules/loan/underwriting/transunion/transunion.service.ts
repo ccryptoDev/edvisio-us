@@ -33,6 +33,8 @@ import { TransunionRepository } from 'src/repository/transunion.repository';
 import { UserEntity } from 'src/entities/users.entity';
 import { LogsService } from '../../../logs/logs.service'
 import { StudentInformationEntity } from 'src/entities/Studentinformation.entity';
+import { TiersService } from 'src/modules/tiers/tiers.service';
+import { ProductService } from '../product/product.service';
 // import xml2js from 'xml2js';
 // import https from 'https';
 
@@ -83,6 +85,8 @@ export class TransunionService {
     private readonly transunionHistoryRepository: TransunionHistoryRepository,
     @InjectRepository(TransunionRepository)
     private readonly transunionRepository: TransunionRepository,
+    private readonly tierService: TiersService,
+    private readonly productService: ProductService,
     
     
   ) {}
@@ -104,9 +108,8 @@ export class TransunionService {
     //   user,
     // );
     const addressObj =
-      applicant.address /*&& user.address_2*/ && applicant.city && applicant.state && applicant.zipcode
+      applicant.address && applicant.city && applicant.state && applicant.zipcode
         ? parseAddress.parseLocation(
-            // `${user.address_1} ${user.address_2}, ${user.city}, ${user.state} ${user.zipcode}`,
             `${applicant.address}, ${applicant.city}, ${applicant.state} ${applicant.zipcode}`,
           )
         : null;
@@ -721,5 +724,56 @@ export class TransunionService {
       transUnions,
     };
     return responseTU;
+  }
+
+  /**
+   * Executes Credit Pull and categorize the Loan using underwriting rules and pricing tiers according to school configuration
+   * @param hardPull 
+   * @param loanId 
+   * @param schoolId 
+   * @param productId 
+   * @returns 
+   */
+  async getCreditPullAuthoriztionResult(
+    hardPull: boolean, loanId: string, schoolId: string, productId: string
+  ) {
+    try {
+      const creditReportResponse = await this.runCreditReport(
+        hardPull,
+        loanId,
+      );
+
+      //const creditReport = creditReportResponse.transUnions;
+      const creditReport = creditReportResponse.transUnionsObj;
+
+      if (!creditReport) {
+        throw new NotFoundException(
+          this.appService.errorHandler(
+            404,
+            'Error attempting to retrieve your credit details.',
+          ),
+        );
+      }
+
+      const stage1Rules = await this.productService.getStage1Rules(
+        creditReport,
+        loanId,
+      );
+
+      if(stage1Rules.loanApproved){
+        let str = creditReport.score;
+        // Categorize student loan for an specific TIER based on the FICO Score and Terms
+        await this.tierService.configureScoreByProduct(
+          loanId,
+          str,
+          schoolId,
+          productId
+      );
+      }
+
+      return { stage1Rules, creditReport };
+    } catch (error) {
+      throw error;
+    }
   }
 }

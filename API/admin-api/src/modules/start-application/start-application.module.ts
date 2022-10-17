@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { HttpService, Module } from '@nestjs/common';
 import { StartApplicationService } from './start-application.service';
 import { StartApplicationController } from './start-application.controller';
 import { typeOrmConfig } from 'src/configs/database/typeorm.config';
@@ -18,6 +18,17 @@ import { MailService } from 'src/mail/mail.service';
 import { SchoolUserRepository } from 'src/repository/schooluser.repository';
 import { ManageSchoolRepository } from 'src/repository/manageSchool.repository';
 import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
+import { HttpModule } from '@nestjs/axios';
+import { TransunionService } from '../loan/underwriting/transunion/transunion.service';
+import { AppService } from 'src/app.service';
+import { TransunionHistoryRepository } from 'src/repository/transunion-history.repository';
+import { TransunionRepository } from 'src/repository/transunion.repository';
+import { TiersService } from '../tiers/tiers.service';
+import { ProductService } from '../loan/underwriting/product/product.service';
+import { TiersRepository } from 'src/repository/tiers.repository';
+import { RulesService } from '../loan/underwriting/product/rules/rules.service';
+import { RulesRepository } from 'src/repository/rules.repository';
+import { UnderwritingRepository } from 'src/repository/underwriting.repository';
 
 @Module({
   imports: [
@@ -35,10 +46,16 @@ import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPr
       CreditReportAuthRepository,
       CustomerRepository,
       ManageSchoolRepository,
-      SchoolAcademicProgramsRepository
+      SchoolAcademicProgramsRepository,
+      TransunionHistoryRepository,
+      TransunionRepository,
+      TiersRepository,
+      RulesRepository,
+      UnderwritingRepository
     ]),
+    HttpModule
   ],
   controllers: [StartApplicationController],
-  providers: [StartApplicationService, MailService],
+  providers: [StartApplicationService, MailService, TransunionService, AppService, TiersService, ProductService, RulesService], 
 })
 export class StartApplicationModule {}

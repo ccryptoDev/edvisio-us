@@ -738,7 +738,7 @@ export class SchoolManagementService {
       let data = await entityManager.query(
         `select tu.* from tblschooluser tsu inner join tbluser tu on tsu.user_id = tu.id where tsu.school_id ='${schoolId}'`,
       );
-      return { statusCode: 200, message: ['Success'], count: data.length, data: data };
+      return { statusCode: 200, message: ['Success'], total: data.length, data: data };
     } catch (error) {
       return {
         statusCode: 500,

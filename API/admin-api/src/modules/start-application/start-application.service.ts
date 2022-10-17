@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   UseFilters,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from 'src/repository/users.repository';
 import { YourInfoDto } from './dto/yourInfo.dto';
@@ -46,6 +47,8 @@ import { AcademicProgramsRepository } from 'src/repository/acdemicPrograms.repos
 import { ReferenceInfoAudit } from 'src/entities/reference-info-audit.entity';
 import { ReferenceDto } from './dto/update-school-app-withref.dto';
 import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
+import { CreateSchoolAppCreditPullDto } from './dto/create-school-app-creditpull.dto';
+import { TransunionService } from '../loan/underwriting/transunion/transunion.service';
 config();
 
 export enum AssetsInfo {
@@ -84,6 +87,8 @@ export class StartApplicationService {
     @InjectRepository(SchoolAcademicProgramsRepository)
     private readonly schoolAcademicProgramsRepository: SchoolAcademicProgramsRepository,
     private readonly mailService: MailService,
+    private httpService: HttpService,
+    private transUnionService: TransunionService,
   ) {}
 
   async getstage(loan_id) {
@@ -1979,9 +1984,11 @@ export class StartApplicationService {
       let schoolEntity = await this.manageSchoolRepository.findOne({
         where: { school_id: createSchoolAppDto.schoolId },
       });
-      let academicProgamEntity = await this.schoolAcademicProgramsRepository.findOne({
-        where: { id: createSchoolAppDto.academicProgramId },
-      });
+      let academicProgamEntity = await this.schoolAcademicProgramsRepository.findOne(
+        {
+          where: { id: createSchoolAppDto.academicProgramId },
+        },
+      );
 
       //Check duplicate User
       let email = await entityManager.query(
@@ -2031,7 +2038,8 @@ export class StartApplicationService {
       reviewPlan.schoolid = createSchoolAppDto.schoolId;
       reviewPlan.schoolstate = schoolEntity.state;
       //reviewPlan.academic_schoolyear = createSchoolAppDto.academicProgram;
-      reviewPlan.academic_schoolyear = academicProgamEntity.academic_program_name;
+      reviewPlan.academic_schoolyear =
+        academicProgamEntity.academic_program_name;
       reviewPlan.requested_amount = createSchoolAppDto.costOfAttendance;
       await this.reviewPlanRepository.save(reviewPlan);
 
@@ -2081,8 +2089,11 @@ export class StartApplicationService {
       let loan, successMessage;
       let studentInfo: StudentInformationEntity;
       let referenceInfo: ReferenceInfoEntity;
-      
-      if(updateSchoolAppDto.references && updateSchoolAppDto.references.length!=2){ 
+
+      if (
+        updateSchoolAppDto.references &&
+        updateSchoolAppDto.references.length != 2
+      ) {
         throw new BadRequestException('2 References are required');
       }
 
@@ -2120,13 +2131,16 @@ export class StartApplicationService {
       await this.studentInformationRepository.save(studentInfo);
 
       //UPDATE Reference Info
-      if(updateSchoolAppDto.references){       
+      if (updateSchoolAppDto.references) {
         referenceInfo = await this.referenceInfoRepository.findOne({
           where: { loan_id: updateSchoolAppDto.loan_id },
         });
-        if (!referenceInfo) 
-          referenceInfo = new ReferenceInfoEntity();
-        await this.setReferenceInfo(referenceInfo, updateSchoolAppDto.references, updateSchoolAppDto.loan_id);
+        if (!referenceInfo) referenceInfo = new ReferenceInfoEntity();
+        await this.setReferenceInfo(
+          referenceInfo,
+          updateSchoolAppDto.references,
+          updateSchoolAppDto.loan_id,
+        );
       }
 
       //UPDATE Loan Status Info
@@ -2168,14 +2182,19 @@ export class StartApplicationService {
     }
   }
 
-  checkDifReferenceError(value1: any, value2:any, key){
-    if(value1 == value2)
-      throw Error(`${key} '${value1}' should not be the same in the 2 references`);
+  checkDifReferenceError(value1: any, value2: any, key) {
+    if (value1 == value2)
+      throw Error(
+        `${key} '${value1}' should not be the same in the 2 references`,
+      );
   }
 
-  async setReferenceInfo(referenceInfo: ReferenceInfoEntity, references: ReferenceDto[], loan_id) {
-
-    if(references.length!=2){
+  async setReferenceInfo(
+    referenceInfo: ReferenceInfoEntity,
+    references: ReferenceDto[],
+    loan_id,
+  ) {
+    if (references.length != 2) {
       throw Error(`2 References are required`);
     }
     let ref1 = references[0];
@@ -2184,9 +2203,13 @@ export class StartApplicationService {
     this.checkDifReferenceError(ref1.firstName, ref2.firstName, 'First name');
     this.checkDifReferenceError(ref1.lastName, ref2.lastName, 'Last Name');
     this.checkDifReferenceError(ref1.address, ref2.address, 'Address');
-    this.checkDifReferenceError(ref1.phoneNumber, ref2.phoneNumber, 'Phone Number');
+    this.checkDifReferenceError(
+      ref1.phoneNumber,
+      ref2.phoneNumber,
+      'Phone Number',
+    );
     this.checkDifReferenceError(ref1.email, ref2.email, 'Email');
-    
+
     referenceInfo.ref1_firstname = ref1.firstName; //check
     referenceInfo.ref1_middlename = ref1.middleName;
     referenceInfo.ref1_lastname = ref1.lastName; //check
@@ -2194,10 +2217,10 @@ export class StartApplicationService {
     referenceInfo.ref1_city = ref1.city;
     referenceInfo.ref1_state = ref1.state;
     referenceInfo.ref1_zipcode = ref1.zipcode;
-    referenceInfo.ref1_phone = ref1.phoneNumber;//check
-    referenceInfo.ref1_email = ref1.email;//check
+    referenceInfo.ref1_phone = ref1.phoneNumber; //check
+    referenceInfo.ref1_email = ref1.email; //check
     referenceInfo.ref1_relationship = ref1.relationship;
-    
+
     referenceInfo.ref2_firstname = ref2.firstName; //check
     referenceInfo.ref2_middlename = ref2.middleName;
     referenceInfo.ref2_lastname = ref2.lastName; //check
@@ -2205,11 +2228,153 @@ export class StartApplicationService {
     referenceInfo.ref2_city = ref2.city;
     referenceInfo.ref2_state = ref2.state;
     referenceInfo.ref2_zipcode = ref2.zipcode;
-    referenceInfo.ref2_phone = ref2.phoneNumber;//check
-    referenceInfo.ref2_email = ref2.email;//check
+    referenceInfo.ref2_phone = ref2.phoneNumber; //check
+    referenceInfo.ref2_email = ref2.email; //check
     referenceInfo.ref2_relationship = ref2.relationship;
 
     referenceInfo.loan_id = loan_id;
     await this.referenceInfoRepository.save(referenceInfo);
+  }
+
+  /**
+   * Creates or Updates a Tuition Loan requested from School Portal
+   * @param createSchoolAppDto
+   * @param ip
+   * @param productId
+   * @returns
+   */
+  async createTuitionAppWithCreditPull(
+    createSchoolAppDto: CreateSchoolAppCreditPullDto,
+    ip,
+    productId,
+  ) {
+    try {
+      let successMessage = 'Successfully Created';
+      
+      let schoolEntity = await this.manageSchoolRepository.findOne({
+        where: { school_id: createSchoolAppDto.schoolId },
+      });
+
+      let academicProgamEntity = await this.schoolAcademicProgramsRepository.findOne(
+        {
+          where: { id: createSchoolAppDto.academicProgramId },
+        },
+      );
+
+      // Check duplicate User
+      let userEntityDuplicate = await this.userRepository.findOne({
+        where:{socialSecurityNumber: createSchoolAppDto.ssn}
+      });
+
+      let userEntity: UserEntity;
+      if(!userEntityDuplicate){
+        userEntity = new UserEntity();
+      }else{
+        userEntity= userEntityDuplicate;
+      }
+
+      //Set User Info
+      // userEntity.email = createSchoolAppDto.email;  (Applicant User is created without email)
+      userEntity.firstName = createSchoolAppDto.firstName;
+      userEntity.middleName = createSchoolAppDto.middleName;
+      userEntity.lastName = createSchoolAppDto.lastName;
+      userEntity.socialSecurityNumber = createSchoolAppDto.ssn;
+      userEntity.birthday = createSchoolAppDto.birthday;
+      userEntity.mainInstallerId = createSchoolAppDto.schoolId;
+      userEntity.role = 2;
+      userEntity.active_flag = Flags.Y;
+      await this.userRepository.save(userEntity);
+
+      let schoolUserEntity = this.schoolUserRepository.findOne({
+          where: {user_id: userEntity.id, school_id: createSchoolAppDto.schoolId}
+        });
+      if(!schoolEntity){
+        let schoolUser = new SchoolUserEntity();
+        schoolUser.user_id = userEntity.id;
+        schoolUser.school_id = createSchoolAppDto.schoolId;
+      }
+      
+      //Set Loan Info
+      let loan = new Loan();
+      loan.user_id = userEntity.id;
+      loan.step = 2;
+      loan.lastScreen = 'Personal Information';
+      loan.createdby = 'School';
+      loan.status_flag = StatusFlags.incompleteSchoolInitiated;
+      await this.loanRepository.save(loan);
+
+      //Set Student Info
+      let studentInfo: StudentInformationEntity;
+      studentInfo = await this.studentInformationRepository.findOne({
+        where: { loan_id: loan.id },
+      });
+
+      if (!studentInfo) {
+        studentInfo = new StudentInformationEntity();
+      }
+      studentInfo.loan_id = loan.id;
+      studentInfo.school_id = userEntity.mainInstallerId;
+      studentInfo.socialSecurityNumber = createSchoolAppDto.ssn;
+      studentInfo.birthday = createSchoolAppDto.birthday;
+      studentInfo.email = loan.id;
+      studentInfo.firstname = createSchoolAppDto.firstName;
+      studentInfo.lastname = createSchoolAppDto.lastName;
+      studentInfo.middlename = createSchoolAppDto.middleName;
+      studentInfo.user_id = userEntity.id;
+
+      studentInfo.address = createSchoolAppDto.address;
+      studentInfo.city = createSchoolAppDto.city;
+      studentInfo.state = createSchoolAppDto.state;
+      studentInfo.zipcode = createSchoolAppDto.zipcode;
+
+      await this.studentInformationRepository.save(studentInfo);
+
+      //Set Review Plan
+      let reviewPlan: ReviewPlanEntity = new ReviewPlanEntity();
+      reviewPlan.loan_id = loan.id;
+      reviewPlan.product = productId;
+      reviewPlan.schoolid = createSchoolAppDto.schoolId;
+      reviewPlan.schoolstate = schoolEntity.state;
+      reviewPlan.academic_schoolyear =
+        academicProgamEntity.academic_program_name;
+      // reviewPlan.requested_amount = createSchoolAppDto.costOfAttendance;
+      await this.reviewPlanRepository.save(reviewPlan);
+
+      //Credit Pull
+      let creditPullResult = await this.runCreditPull(loan.id, createSchoolAppDto.schoolId, productId);
+
+      let log = new LogEntity();
+      log.module = 'Personal Information posted by school. IP : ' + ip;
+      log.user_id = userEntity.id;
+      log.loan_id = loan.id;
+      await this.logRepository.save(log);
+
+      return {
+        statusCode: 200,
+        message: [successMessage],
+        loan_id: loan.id,
+        loanApproved: creditPullResult.stage1Rules.loanApproved
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        statusCode: 500,
+        message: error.message,
+        error: error.name,
+      };
+    }
+  }
+  
+  
+  async runCreditPull(loanId, schoolId, productId) {
+
+    const result = await this.transUnionService.getCreditPullAuthoriztionResult(
+      true,
+      loanId,
+      schoolId,
+      productId 
+    );
+
+    return result;
   }
 }

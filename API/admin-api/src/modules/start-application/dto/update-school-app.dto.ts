@@ -62,14 +62,13 @@ export class UpdateSchoolApplicationDto {
     example: '666603691',
   })
   ssn: string;
-
+  
   @IsNotEmpty()
   @Type(() => Date)
   @IsDate()
-  @IsNotEmpty()
   @ApiProperty({
     description: 'Student Birthday',
-  })
+    format:'date'})
   birthday: Date;
 
   @IsEmail()

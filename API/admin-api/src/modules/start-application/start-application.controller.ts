@@ -25,6 +25,7 @@ import { UpdateSchoolApplicationDto } from './dto/update-school-app.dto';
 import { CreateSchoolAppWithFinancialDto } from './dto/create-school-app-financial.dto';
 import { TuitionProductIDs } from 'src/common/utilities/common_utils';
 import { UpdateSchoolAppWithReference } from './dto/update-school-app-withref.dto';
+import { CreateSchoolAppCreditPullDto } from './dto/create-school-app-creditpull.dto';
 
 // @ApiBearerAuth()
 // @Roles('school')
@@ -215,6 +216,16 @@ export class StartApplicationController {
     @RealIP() ip: string,
   ) {
     return this.startApplicationService.createTuitionApplication(createSchoolApplicationDto, ip, TuitionProductIDs.TUITION_FLEX);
+  }
+
+  @Post('/creditPullAuth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Starts TuitionFlexPlus Loan from School Portal with Credit Pull upfront' })
+  async cretditPullAuth(
+    @Body() createSchoolApplicationDto: CreateSchoolAppCreditPullDto,
+    @RealIP() ip: string,
+  ) {
+    return this.startApplicationService.createTuitionAppWithCreditPull(createSchoolApplicationDto, ip, TuitionProductIDs.TUITION_FLEXPLUS);
   }
 
 }

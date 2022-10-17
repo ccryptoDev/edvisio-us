@@ -44,10 +44,9 @@ export class CreateSchoolApplicationDto {
   @IsNotEmpty()
   @Type(() => Date)
   @IsDate()
-  @IsNotEmpty()
   @ApiProperty({
-    description: 'Applicant Birthday',
-  })
+    description: 'Student Birthday',
+    format:'date'})
   birthday: Date;
 
   @IsEmail()
