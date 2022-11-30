@@ -15,10 +15,14 @@ import { LoanRepository } from 'src/repository/loan.repository';
 import { ReviewPlanRepository } from 'src/repository/reviewPlan.repository';
 import { SelfCertificatinRepository } from 'src/repository/selfcertification.repository';
 import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPrograms.repository';
+import { ConfigModule } from '@nestjs/config';
+import loanmasterConfig from './loan-master.config';
+import { ManageSchoolRepository } from 'src/repository/manageSchool.repository';
 
 @Module({
   controllers: [LoanMasterController],
   imports: [
+    ConfigModule.forRoot({ load: [loanmasterConfig] }),
     HttpModule,
     TypeOrmModule.forFeature([
       PaymentScheduleRepository,
@@ -30,7 +34,8 @@ import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPr
       LoanRepository,
       ReviewPlanRepository,
       SelfCertificatinRepository,
-      SchoolAcademicProgramsRepository
+      SchoolAcademicProgramsRepository,
+      ManageSchoolRepository,
     ]),
   ],
   exports: [LoanMasterService],
