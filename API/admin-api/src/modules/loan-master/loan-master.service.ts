@@ -39,6 +39,16 @@ import { SchoolAcademicProgramsRepository } from 'src/repository/schoolacdemicPr
 import { SelfCertificationEntity } from 'src/entities/selfCertification.entity';
 import { ReviewPlanEntity } from 'src/entities/reviewPlan.entity';
 import { UsersRoleID } from 'src/guards/roles.guard';
+import { ConfigService } from '@nestjs/config';
+import { TuitionProductIDs } from 'src/common/utilities/common_utils';
+import { ManageSchoolRepository } from 'src/repository/manageSchool.repository';
+
+const path = require('path');
+const fs = require('fs-extra');
+const puppeteer = require('puppeteer');
+
+const hummus = require('hummus');
+const memoryStreams = require('memory-streams');
 
 config();
 
@@ -65,8 +75,11 @@ export class LoanMasterService {
     private readonly selfCertificationRepository: SelfCertificatinRepository,
     @InjectRepository(SchoolAcademicProgramsRepository)
     private readonly schoolAcademicProgramsRepository: SchoolAcademicProgramsRepository,
+    @InjectRepository(ManageSchoolRepository)
+    private readonly manageSchoolRepository: ManageSchoolRepository,
     private readonly mailService: MailService,
     private readonly outsideService: OutsideService,
+    private readonly configService: ConfigService,
   ) {}
 
   //Get All
@@ -1195,9 +1208,9 @@ export class LoanMasterService {
 
   /**
    * Returns available schools for userId
-   * @param userId 
-   * @param schoolId 
-   * @returns 
+   * @param userId
+   * @param schoolId
+   * @returns
    */
   async getUserSchools(userId: string, schoolId?: string) {
     var allowedSchools = [];
@@ -1505,6 +1518,154 @@ export class LoanMasterService {
         message: [new InternalServerErrorException(error)['response']['name']],
         error: 'Bad Request',
       };
+    }
+  }
+
+  async generateRicPDF(loanId): Promise<Buffer> {
+    const templatesPath = this.configService.get('ricTemplates').path;
+
+    let reviewPlan = await this.reviewPlanRepository.findOne({
+      where: { loan_id: loanId },
+    });
+
+    let school = await this.manageSchoolRepository.findOne({
+      where: { school_id: reviewPlan.schoolid },
+    });
+
+    //Resolve RIC Template based on States
+    let ricTemplateConfigurations = this.configService.get('ricTemplates')
+      .stateConfigs;
+
+    let result = ricTemplateConfigurations.find(
+      config =>
+        config.state == school.state &&
+        config.ed2go == (school.schoolName == 'ED2GO') &&
+        config.products.includes(reviewPlan.product),
+    );
+
+    if (!result) {
+      result = ricTemplateConfigurations.find(
+        config => config.state == 'MULTISTATE',
+      );
+    }
+    let ricTemplateConfig = result;
+
+    const htmlTemplatePath = path.join(
+      __dirname,
+      templatesPath,
+      ricTemplateConfig.template,
+    );
+
+    let ricTemplate = fs.readFileSync(htmlTemplatePath, 'utf-8');
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(ricTemplate);
+
+    const bufferRIC = await page.pdf({
+      displayHeaderFooter: true,
+      headerTemplate: '<span></span>',
+      footerTemplate: ricTemplateConfig.footerTemplate,
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '55px', right: '5px', bottom: '100px', left: '5px' },
+    });
+
+    //Sales Agreement Form
+    if (ricTemplateConfig.salesAgreementForm) {
+      const bufferAppForm = await this.generateRicApplicationForm(loanId);
+      const buffer2 = await this.combinePDFBuffers(
+        bufferAppForm,
+        bufferRIC,
+        ricTemplateConfig.pageRangeToMerge,
+      );
+      await browser.close();
+      return buffer2;
+    }
+
+    await browser.close();
+
+    return bufferRIC;
+  }
+
+  async generateRicApplicationForm(loan_id): Promise<Buffer> {
+    const filePath = path.join(
+      __dirname,
+      '../../assets/template/ric/',
+      `ric_form.html`,
+    );
+
+    const logoTuitionFlex = path.join(
+      __dirname,
+      '../../assets/template/png/logos/',
+      `logo-tuition-flex.png`,
+    );
+    let logo = fs.readFileSync(logoTuitionFlex).toString('base64');
+
+    let ricTemplate = fs.readFileSync(filePath, 'utf-8');
+
+    ricTemplate = ricTemplate.replace('{{ logo }}', logo);
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(ricTemplate);
+
+    const buffer = await page.pdf({
+      displayHeaderFooter: false,
+      headerTemplate: '<span></span>',
+      footerTemplate: ``,
+      format: 'A4',
+      printBackground: true,
+      pageRanges: '1-1',
+      margin: { top: '20px', right: '10px', bottom: '30px', left: '10px' },
+    });
+
+    await browser.close();
+
+    return buffer;
+  }
+
+  /**
+   * Concatenate two PDFs in Buffers
+   * @param {Buffer} firstBuffer
+   * @param {Buffer} secondBuffer
+   * @returns {Buffer} - a Buffer containing the concactenated PDFs
+   */
+  async combinePDFBuffers(firstBuffer, secondBuffer, pageRange?) {
+    var outStream = new memoryStreams.WritableStream();
+
+    try {
+      var firstPDFStream = new hummus.PDFRStreamForBuffer(firstBuffer);
+      var secondPDFStream = new hummus.PDFRStreamForBuffer(secondBuffer);
+      var pdfWriter = hummus.createWriterToModify(
+        firstPDFStream,
+        new hummus.PDFStreamForResponse(outStream),
+      );
+      if (pageRange) {
+        pdfWriter.appendPDFPagesFromPDF(secondPDFStream, {
+          type: hummus.eRangeTypeSpecific,
+          specificRanges: pageRange,
+        });
+      } else {
+        pdfWriter.appendPDFPagesFromPDF(secondPDFStream);
+      }
+
+      pdfWriter.end();
+      var newBuffer = outStream.toBuffer();
+      outStream.end();
+      hummus.appendPDFPagesFromPDF;
+      return newBuffer;
+    } catch (e) {
+      outStream.end();
+      throw new Error('Error during PDF combination: ' + e.message);
     }
   }
 }
