@@ -29,6 +29,7 @@ import { RulesRepository } from 'src/repository/rules.repository';
 import { UnderwritingRepository } from 'src/repository/underwriting.repository';
 import { TiersService } from 'src/modules/tiers/tiers.service';
 import { TiersRepository } from 'src/repository/tiers.repository';
+import { ReviewPlanRepository } from 'src/repository/reviewPlan.repository';
 // import { PaymentManagementModule } from '../../../loans/payments/payment-management/payment-management.module';
 // import { PaymentManagementService } from '../../../loans/payments/payment-management/payment-management.service';
 // import { PaymentScheduleHistoryModule } from '../../../loans/payments/payment-schedule-history/payment-schedule-history.module';
@@ -49,6 +50,7 @@ import { TiersRepository } from 'src/repository/tiers.repository';
       RulesRepository,
       UnderwritingRepository,
       TiersRepository,
+      ReviewPlanRepository,
     ]),
   ],
   providers: [
