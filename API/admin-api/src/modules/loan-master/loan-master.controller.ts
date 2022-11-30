@@ -14,6 +14,7 @@ import {
   Req,
   Patch,
   ValidationPipe,
+  Res,
 } from '@nestjs/common';
 import { LoanMasterService } from './loan-master.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,6 +24,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiProduces,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -43,6 +45,7 @@ import { PaymentCalcultionResponseDto } from './dto/payment-calculation-response
 import { LoanUpdateDto } from './dto/loan.dto';
 import { SuccessResponseDto } from './dto/success-response.dto';
 import { ApplicationStatusValidationPipe } from './pipes/application-status-pipe';
+import { Response } from 'express';
 export const Roles = (...roles: string[]) => SetMetadata('role', roles);
 
 @ApiTags('Loan-master')
@@ -264,6 +267,35 @@ export class LoanMasterController {
     @Param('id', ParseUUIDPipe) loanId: string,
   ) {
     return this.loanMasterService.editLoan(loanId, loanDto, userId);
+  }
+
+  @Get('/loan/print/:loan_id')
+  @ApiOkResponse({
+    schema: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
+  @ApiProduces('application/pdf')
+  async printLoanRetailInstallmentContract(
+    @Param('loan_id', ParseUUIDPipe) loan_id: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const buffer = await this.loanMasterService.generateRicPDF(loan_id)
+
+    res.set({
+      // pdf
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename=ric.pdf',
+      'Content-Length': buffer.length,
+
+      // prevent cache
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': 0,
+    })
+
+    res.send(buffer);
   }
 
   //Document-Center
