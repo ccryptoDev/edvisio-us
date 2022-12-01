@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { SigninCreadentialsDto, VerifyOtpDto } from './dto/signin-user.dto';
 import { UserRepository } from '../../repository/users.repository';
@@ -10,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import IJwtPayload from '../../payloads/jwt-payload';
 import { UserEntity, Flags } from '../../entities/users.entity';
-import { Brackets, Connection, EntityManager, getManager } from 'typeorm';
+import { getManager } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -25,9 +26,6 @@ import { OtpEntity } from 'src/entities/otp.entity';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { Loan } from 'src/entities/loan.entity';
 import { LoanRepository } from 'src/repository/loan.repository';
-import { YourInfoDto } from '../credit-application/dto/yourInfo.dto';
-import e from 'express';
-import { Roles } from './users.controller';
 import { UsersRoleID } from 'src/guards/roles.guard';
 
 @Injectable()
@@ -67,7 +65,6 @@ export class UsersService {
           if (user[0].active_flag == 'Y') {
             if (user[0].emailVerify == 'Y') {
               let resuser = new UserEntity();
-              let loan = new Loan();
               resuser.email = user[0].email;
               resuser.firstName = user[0].firstName;
               resuser.lastName = user[0].lastName;
@@ -429,6 +426,31 @@ export class UsersService {
     try {
       let user = await this.userRepository.findOne({ id: userId });
       return { statusCode: 200, data: user };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        message: [new InternalServerErrorException(error)['response']['name']],
+        error: 'Bad Request',
+      };
+    }
+  }
+
+  //Get Two-fact-auth
+  async getUserData(userId) {
+    try {
+      const entityManager = getManager();
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+
+      if (!user) {
+        return {
+          statusCode: 404,
+          message: [new NotFoundException()],
+        };
+      }
+      return {
+        statusCode: 200,
+        data: user,
+      };
     } catch (error) {
       return {
         statusCode: 500,
