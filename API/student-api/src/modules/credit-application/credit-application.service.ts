@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserRepository } from 'src/repository/users.repository';
-import { YourInfoDto } from './dto/yourInfo.dto';
+import { YourInfoDto, YourInfoResponseDto } from './dto/yourInfo.dto';
 import { LoanRepository } from 'src/repository/loan.repository';
 import { Flags, Loan, StatusFlags } from 'src/entities/loan.entity';
 import { getManager } from 'typeorm';
@@ -39,11 +39,9 @@ import { EditRef1InfoDto } from './dto/EditRef1.dto';
 import { EditRef2InfoDto } from './dto/EditRef2.dto';
 import { EditEmploymentInfoDto } from './dto/updateEmploymentInfo.dto';
 import { UserEntity } from 'src/entities/users.entity';
-import { EditStudentDetailsDto } from './dto/editstudentdetails.dto';
 import { MailService } from 'src/mail/mail.service';
-import * as bcrypt from 'bcrypt';
-import { consoleTestResultHandler } from 'tslint/lib/test';
 import { userConsentRepository } from 'src/repository/userConsent.repository';
+import { plainToClass } from 'class-transformer';
 
 export enum AssetsInfo {
   OWN = 'Own',
@@ -175,6 +173,13 @@ export class CreditApplicationService {
       );
       if (loanid.length > 0) {
         if (submitDto.isSubmit == true) {
+          if (loanid[0].isEsignAccepted) {
+            return {
+              statusCode: 200,
+              message: ['Success'],
+            };
+          }
+
           if (loanid[0].step == 2) {
             await this.loanRepository.update(
               { id: loan_id },
@@ -451,18 +456,25 @@ export class CreditApplicationService {
   }
 
   async getuserInfo(loan_id) {
-    let entityManager = getManager();
-
     try {
-      let rawData = await entityManager.query(
+      const entityManager = getManager();
+      let data = {};
+      const rawData = await entityManager.query(
         `select 
         * from 
         tbluser t join tblloan t2 on t2.user_id = t.id
         where t2.id='${loan_id}'`,
       );
-      return { statusCode: 200, message: ['success'], data: rawData };
+      if (rawData && rawData.length > 0) {
+        data = plainToClass(YourInfoResponseDto, rawData[0]);
+      }
+      return {
+        statusCode: 200,
+        message: ['success'],
+        data,
+      };
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -470,7 +482,6 @@ export class CreditApplicationService {
     try {
       let entityManager = getManager();
       let dateofbirth;
-
       // Details for pre-populated
       let details = await entityManager.query(
         `select t.email,t."firstName", t."middleName", t."lastName", t.birthday,t."socialSecurityNumber", t.id
@@ -479,8 +490,6 @@ export class CreditApplicationService {
           
           where t2.id = '${loan_id}'`,
       );
-      console.log(details);
-
       // Data required for Age Validation
       let target = await entityManager.query(
         `select t.state_usein_ric as statetype, 
@@ -489,18 +498,11 @@ export class CreditApplicationService {
         left join tblmanageschools t2 on t2.school_id = t.school_id 
         where t2.school_id = '${yourInfoDto.school_id}'`,
       );
-
-      console.log('**********', target);
-
       // Calculation for Age validation
       let date1 = new Date(details[0].birthday);
-      console.log(date1);
       let date2 = new Date();
-      console.log();
       let differenceDate = date2.getTime() - date1.getTime();
-      console.log(differenceDate);
       let age = differenceDate / (1000 * 3600 * 24 * 365.25);
-      console.log(age);
       // Check State Type
       if (target[0].statetype == 'School State') {
         let state_ageLimit = await entityManager.query(
@@ -508,7 +510,6 @@ export class CreditApplicationService {
         );
         if (state_ageLimit[0].age_limit <= age) {
           dateofbirth = date1;
-          console.log('schoolstate', dateofbirth);
         } else {
           return {
             statusCode: 400,
@@ -523,7 +524,6 @@ export class CreditApplicationService {
         );
         if (state_ageLimit[0].age_limit <= age) {
           dateofbirth = date1;
-          console.log('permanentstate', dateofbirth);
         } else {
           return {
             statusCode: 400,
@@ -551,12 +551,10 @@ export class CreditApplicationService {
         studentInformationEntity.state = details[0].state;
 
         // Licence State
-
         studentInformationEntity.licence_state =
           yourInfoDto.driver_licence_state;
 
         //Licence Number
-
         studentInformationEntity.licence_number =
           yourInfoDto.driver_licence_number;
 
@@ -971,7 +969,7 @@ export class CreditApplicationService {
         return { statusCode: 200, message: ['Successfully updated'] };
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         statusCode: 500,
         message: [new InternalServerErrorException(error)['response']['name']],
