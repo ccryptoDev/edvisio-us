@@ -13,7 +13,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { S3 } from 'aws-sdk';
 import { RealIp, RealIP } from 'nestjs-real-ip';
 import { extname } from 'path';
@@ -33,7 +33,7 @@ import { ReferenceInfoDto } from './dto/referenceInfo.dto';
 import { ReviewPlanDto } from './dto/reviewplan.dto';
 import { SelfCertificationDto } from './dto/selfCertification.dto';
 import { EditEmploymentInfoDto } from './dto/updateEmploymentInfo.dto';
-import { YourInfoDto } from './dto/yourInfo.dto';
+import { YourInfoDto, YourInfoResponseDto } from './dto/yourInfo.dto';
 import { EditSelfCertificationDto } from './dto/EditSelfCertification.dto';
 import { userConsentEnity } from 'src/entities/userConsent.entity';
 import { getManager } from 'typeorm';
@@ -60,6 +60,11 @@ export class CreditApplicationController {
   @Get('getInfo/:loan_id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get basic information' })
+  @ApiResponse({
+    status: 200,
+    description: 'The found user information',
+    type: YourInfoResponseDto,
+  })
   async getuserInfo(@Param('loan_id', ParseUUIDPipe) loan_id: string) {
     return this.creditApplicationService.getuserInfo(loan_id);
   }
@@ -89,7 +94,7 @@ export class CreditApplicationController {
       submitDto,
       ip,
     );
-    if (target.statusCode == 200) {
+    if (target?.statusCode == 200) {
       let filekey = 101;
       this.automateUserConsentGenerate(loan_id, filekey);
     }
