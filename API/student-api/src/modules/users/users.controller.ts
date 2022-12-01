@@ -25,6 +25,7 @@ export const Roles = (...roles: string[]) => SetMetadata('role', roles);
 export enum AuthSummary {
   SIGN_IN_SUMMARY = 'Sign in for users.',
   User_verify = 'User Verify',
+  User_data = 'User Data',
 }
 
 @ApiTags('Users')
@@ -93,11 +94,11 @@ export class UsersController {
     return this.usersService.toggleTwoFactorAuth(userId, toggleValue);
   }
 
-  @Get('/getTwoFactorAuth/:id')
+  @Get('/getUserData/:id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: AuthSummary.User_verify })
-  async getTwoFactorAuth(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.getTwoFactorAuth(id);
+  @ApiOperation({ summary: AuthSummary.User_data })
+  async getUserData(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.getUserData(id);
   }
 
   @Post('verifyOtp')
@@ -111,5 +112,12 @@ export class UsersController {
   @ApiOperation({ summary: 'To check otp is valid or not' })
   async createAccout(@Body() createAccountDto: CreateAccountDto) {
     return this.usersService.CreateAccount(createAccountDto);
+  }
+
+  @Get('/getTwoFactorAuth/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: AuthSummary.User_verify })
+  async getTwoFactorAuth(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.getTwoFactorAuth(id);
   }
 }
