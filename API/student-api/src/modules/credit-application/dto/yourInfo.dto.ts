@@ -1,7 +1,9 @@
-import { Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
+  IsDateString,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -29,13 +31,218 @@ export class PermanentAddress {
 }
 
 export class StudentInfo {
-         firstname: string;
-         middlename: string;
-         lastname: string;
-         birthday: Date;
-         email: string;
-         ssn: string;
-       }
+  firstname: string;
+  middlename: string;
+  lastname: string;
+  birthday: Date;
+  email: string;
+  ssn: string;
+}
+
+export class YourInfoResponseDto {
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @IsNotEmpty()
+  ref_no: number;
+
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsOptional()
+  middleName: string;
+
+  @IsNotEmpty()
+  lastName: string;
+
+  @Exclude()
+  password: string;
+
+  @Exclude()
+  salt: string;
+
+  @IsNotEmpty()
+  reset: false;
+
+  @IsNotEmpty()
+  @IsDateString()
+  birthday: string;
+
+  @IsNotEmpty()
+  socialSecurityNumber: string;
+
+  @IsNotEmpty()
+  delete_flag: string;
+
+  @IsNotEmpty()
+  emailVerify: string;
+
+  @IsNotEmpty()
+  active_flag: string;
+
+  @IsNotEmpty()
+  role: number;
+
+  @IsOptional()
+  mainInstallerId: string;
+
+  @IsNotEmpty()
+  twoFactorAuth: string;
+
+  @IsNotEmpty()
+  @IsDateString()
+  createdAt: string;
+
+  @IsOptional()
+  @IsDateString()
+  updatedAt: string;
+
+  @IsOptional()
+  alternate_id: string;
+
+  @IsOptional()
+  phone_number: string;
+
+  @IsOptional()
+  driver_license: string;
+
+  @IsOptional()
+  driver_license_state_id: string;
+
+  @IsOptional()
+  state: string;
+
+  @IsOptional()
+  address_1: string;
+
+  @IsOptional()
+  address_2: string;
+
+  @IsOptional()
+  city: string;
+
+  @IsOptional()
+  zipcode: string;
+
+  @IsOptional()
+  alternate_phone_number: string;
+
+  @IsOptional()
+  alternate_type_id: string;
+
+  @IsNotEmpty()
+  user_id: string;
+
+  @IsNotEmpty()
+  status_flag: string;
+
+  @IsOptional()
+  ins_user_id: string;
+
+  @IsNotEmpty()
+  step: number;
+
+  @IsNotEmpty()
+  lastScreen: string;
+
+  @IsOptional()
+  signature: string;
+
+  @IsOptional()
+  @IsDateString()
+  datesignature: string;
+
+  @IsOptional()
+  signature_ip: string;
+
+  @IsNotEmpty()
+  isSubmit: boolean;
+
+  @IsOptional()
+  denied_reason: string;
+
+  @IsNotEmpty()
+  createdby: string;
+
+  @IsOptional()
+  @IsDateString()
+  submitDate: string;
+
+  @IsOptional()
+  @IsDateString()
+  app_incompletedate: string;
+
+  @IsOptional()
+  @IsDateString()
+  app_pendingmoveddate: string;
+
+  @IsOptional()
+  @IsDateString()
+  app_approveddate: string;
+
+  @IsOptional()
+  @IsDateString()
+  app_denieddate: string;
+
+  @IsOptional()
+  app_awaitingcosigner_moveddate: string;
+
+  @IsOptional()
+  @IsDateString()
+  app_pendingborrowersign: string;
+
+  @IsOptional()
+  @IsDateString()
+  app_pendingcosignersign: string;
+
+  @IsOptional()
+  @IsDateString()
+  rts_date: string;
+
+  @IsOptional()
+  @IsDateString()
+  certified_date: string;
+
+  @IsNotEmpty()
+  isEsignAccepted: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  Esigndoc_acceptedDate: string;
+
+  @IsNotEmpty()
+  commConsent_accepted: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  commConsent_acceptedDate: string;
+
+  @IsNotEmpty()
+  isprivacyPolicy_accepted: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  privacyPolicy_acceptedDate: string;
+
+  @IsNotEmpty()
+  iscreditCheck_accepted: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  creditCheck_acceptedDate: string;
+
+  @IsNotEmpty()
+  isApplicationdoc_accepted: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  applicationdoc_viewedDate: string;
+}
 
 export class YourInfoDto {
   // @IsNotEmpty()
