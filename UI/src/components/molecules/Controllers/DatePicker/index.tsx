@@ -1,20 +1,22 @@
 import React from "react";
-import moment from "moment";
+import TextField from "@mui/material/TextField";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { DatePickerWrapper } from "../styles";
 import Label from "../Elements/FieldLabel";
 import Error from "../Elements/FieldError";
-import DatePicker from "./Material";
 
 export default function DobPicker({
   label = "",
   onChange,
   message = "",
   name,
+  disabled = false,
   value = new Date(),
 }: any) {
   const onChangeHandler = (e: any) => {
-    const date = new Date(e.target.value);
-    const event = { target: { value: date, name } };
+    const event = { target: { value: e, name } };
     onChange(event);
   };
   const error = !!message;
@@ -26,11 +28,16 @@ export default function DobPicker({
     >
       {label ? <Label label={label} /> : ""}
       <div style={{ position: "relative" }}>
-        <DatePicker
-          value={moment(value).format("YYYY-MM-DD")}
-          name={name}
-          onChange={onChangeHandler}
-        />
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DesktopDatePicker
+            label={label}
+            disabled={disabled}
+            inputFormat="MM/dd/yyyy"
+            value={value}
+            onChange={onChangeHandler}
+            renderInput={(params) => <TextField {...params} />}
+          />
+        </LocalizationProvider>
       </div>
       <Error message={message} />
     </DatePickerWrapper>
