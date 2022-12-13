@@ -31,6 +31,10 @@ export const button = css`
     &:disabled {
       background: var(--color-gray-3);
     }
+
+    & svg path {
+      fill: #fff;
+    }
   }
 
   &.outlined {
