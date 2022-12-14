@@ -3,9 +3,16 @@ import styled from "styled-components";
 import GoBackButton from "./GoBack";
 import { ReactComponent as EditIcon } from "../../../assets/svgs/pencil.svg";
 import { ReactComponent as CheckedIcon } from "../../../assets/svgs/checked.svg";
-import { ReactComponent as CanceldIcon } from "../../../assets/svgs/error.svg";
+import { ReactComponent as CancelIcon } from "../../../assets/svgs/error.svg";
 import { ReactComponent as ExpandIcon } from "../../../assets/svgs/expand.svg";
 import { circle } from "../../atoms/Elements/Circle";
+import { Rounded } from "../../atoms/Buttons/Action";
+import { ReactComponent as Chevron } from "../../../assets/svgs/chevron-down.svg";
+
+const DownBtn = styled(Rounded)`
+  width: 24px;
+  height: 24px;
+`;
 
 const Button = styled.button`
   ${circle}
@@ -66,6 +73,26 @@ const TransparentBtn = styled.button`
       }
     }
   }
+
+  &.save {
+    & svg {
+      width: 14px;
+      height: 18px;
+      & path {
+        fill: var(--color-primary-green-1);
+      }
+    }
+  }
+
+  &.cancel {
+    & svg {
+      width: 14px;
+      height: 18px;
+      path {
+        fill: var(--color-functional-red-1);
+      }
+    }
+  }
 `;
 
 const ActionButton = ({
@@ -73,7 +100,7 @@ const ActionButton = ({
   type,
 }: {
   onClick?: any;
-  type: "goback" | "edit" | "save" | "cancel" | "expand";
+  type: "goback" | "edit" | "save" | "cancel" | "expand" | "down";
 }) => {
   const renderIcon = () => {
     if (type === "edit") {
@@ -85,9 +112,9 @@ const ActionButton = ({
     }
     if (type === "save") {
       return (
-        <Button className="save" onClick={onClick}>
+        <TransparentBtn className="save" onClick={onClick}>
           <CheckedIcon />
-        </Button>
+        </TransparentBtn>
       );
     }
     if (type === "expand") {
@@ -97,11 +124,18 @@ const ActionButton = ({
         </TransparentBtn>
       );
     }
+    if (type === "down") {
+      return (
+        <DownBtn className="expand" type="button" onClick={onClick}>
+          <Chevron />
+        </DownBtn>
+      );
+    }
     if (type === "cancel") {
       return (
-        <Button className="cancel" onClick={onClick}>
-          <CanceldIcon />
-        </Button>
+        <TransparentBtn className="cancel" onClick={onClick}>
+          <CancelIcon />
+        </TransparentBtn>
       );
     }
     if (type === "goback") {
