@@ -54,16 +54,11 @@ const MenuListComposition = ({ button, menu: Menu, ...props }) => {
           anchorEl={anchorRef.current}
           role={undefined}
           disablePortal
+          placement="bottom-start"
           className="popper"
         >
-          {({ TransitionProps, placement }) => (
-            <Grow
-              {...TransitionProps}
-              style={{
-                transformOrigin:
-                  placement === "bottom" ? "center top" : "center bottom",
-              }}
-            >
+          {({ TransitionProps }) => (
+            <Grow {...TransitionProps}>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList
                   autoFocusItem={open}
