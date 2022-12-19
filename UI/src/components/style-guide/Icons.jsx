@@ -70,6 +70,7 @@ import star from "../../assets/svgs/star.svg";
 import success from "../../assets/svgs/success.svg";
 import talk from "../../assets/svgs/talk.svg";
 import twitter from "../../assets/svgs/twitter.svg";
+import unlocked from "../../assets/svgs/unlocked.svg";
 import upload from "../../assets/svgs/upload.svg";
 import view from "../../assets/svgs/view.svg";
 import wallet from "../../assets/svgs/wallet.svg";
@@ -165,6 +166,7 @@ const renderIcons = [
   { label: "success", value: success },
   { label: "talk", value: talk },
   { label: "twitter", value: twitter },
+  { label: "unlocked", value: unlocked },
   { label: "upload", value: upload },
   { label: "view", value: view },
   { label: "wallet", value: wallet },
