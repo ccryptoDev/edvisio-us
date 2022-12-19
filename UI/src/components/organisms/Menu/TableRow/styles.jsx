@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { smallBordersTd } from "../../../atoms/Table";
+import { smallBordersTd } from "../../../atoms/Table/Elements";
 
 const Td = styled.td`
   ${smallBordersTd}
@@ -35,6 +35,7 @@ const Td = styled.td`
       gap: 6px;
       background: none;
       border: none;
+      z-index: 100;
       & .label {
         text-transform: upperCase;
         color: var(--color-primary-dark-1);
