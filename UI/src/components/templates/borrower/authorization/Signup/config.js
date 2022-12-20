@@ -4,13 +4,14 @@ import DatePicker from "../../../../molecules/Controllers/DatePicker/Placeholder
 import TextField from "../../../../molecules/Controllers/TextField/Placeholder-label";
 import Select from "../../../../molecules/Controllers/Select/Placeholder-label";
 import { requiredFieldLabel } from "../../../../molecules/Controllers/Elements/FieldLabel";
+import { IdType } from "../../../../../utils/selectsOptions";
 
 export const initForm = () => {
   return {
     firstName: { value: "", message: "", required: true },
     middleName: { value: "", message: "", required: false },
     lastName: { value: "", message: "", required: true },
-    idType: { value: "", message: "", required: true },
+    idType: { value: IdType[0].value, message: "", required: true },
     dob: { value: "", message: "", required: true },
     email: { value: "", message: "", required: true },
     password: { value: "", message: "", required: true },
@@ -45,7 +46,7 @@ export const renderFields = (form) => [
     message: form.idType.message,
     name: "idType",
     component: Select,
-    options: [],
+    options: IdType,
     label: requiredFieldLabel("ID Type"),
   },
   {
