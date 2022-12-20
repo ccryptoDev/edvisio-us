@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useHistory } from "react-router-dom";
 import SubmitButton from "../../../../molecules/Buttons/SubmitButton";
 import { useForm } from "../../../../../hooks/form-control";
 import { initForm, renderFields } from "./config";
 import { validate } from "./validate";
 import { mockRequest } from "../../../../../utils/mockRequest";
+import { routes } from "../../../../../routes/Borrower/routes";
 
 const Form = styled.form`
   & .fields-wrapper {
@@ -57,12 +59,15 @@ const PasswordNote = () => {
 const FormComponent = () => {
   const { form, setForm, onChangeHandler } = useForm(initForm());
   const [loading, setLoading] = useState(false);
+  const history = useHistory();
+
   const onSubmit = async (e: any) => {
     e.preventDefault();
     const [isValid, updatedForm] = validate(form);
     if (isValid) {
       setLoading(true);
       await mockRequest();
+      history.push(routes.VERIFICATION);
     } else {
       setForm(updatedForm);
     }
