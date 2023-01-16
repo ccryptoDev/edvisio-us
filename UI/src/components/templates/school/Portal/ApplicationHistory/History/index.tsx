@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import Table from "./Table";
-import { Text } from "../../../../../atoms/Typography";
+import { Text as Heading } from "../../../../../atoms/Typography";
 
 const Layout = styled.div`
   display: flex;
@@ -16,12 +16,12 @@ const Layout = styled.div`
 
 const HistoryTable = ({ transactions }: any) => {
   return (
-    <Layout>
-      <Text className="heading">Application Transactions</Text>
+    <Layout className="content-wrapper">
+      <Heading className="heading">Application Transactions</Heading>
       <Table items={transactions?.applicationTransactions} />
-      <Text className="heading">Borrower Transactions</Text>
+      <Heading className="heading">Borrower Transactions</Heading>
       <Table items={transactions?.borrowerTransactions} />
-      <Text className="heading">Сosigner Transactions</Text>
+      <Heading className="heading">Сosigner Transactions</Heading>
       <Table items={transactions?.coSignerTransactions} />
     </Layout>
   );
