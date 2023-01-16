@@ -1,32 +1,39 @@
 import React from "react";
 import styled from "styled-components";
-import { ClassicTable, smallBordersTd } from "../../../../../../atoms/Table";
+import {
+  smallBordersTd,
+  tableRowChessBackground,
+} from "../../../../../../atoms/Table/Elements";
+import { GridTable } from "../../../../../../atoms/Table";
 import Thead from "./Thead";
 import Rows from "./Rows";
 
-const TableWrapper = styled(ClassicTable)`
+const TableWrapper = styled(GridTable)`
   border: 1px solid var(--color-gray-3);
   border-radius: 6px;
   overflow: hidden;
-  table {
-    & tr {
-      & td,
-      & th {
-        width: 33%;
+  .table {
+    font-size: 12px;
+    & .tr {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      & .td,
+      & .th {
         ${smallBordersTd}
-        font-size: 12px;
       }
     }
   }
+
+  ${tableRowChessBackground}
 `;
 
 const HistoryTable = ({ items }: any) => {
   return (
     <TableWrapper>
-      <table>
+      <div className="table">
         <Thead />
         <Rows items={items} />
-      </table>
+      </div>
     </TableWrapper>
   );
 };
