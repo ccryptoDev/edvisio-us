@@ -1,28 +1,28 @@
 import React from "react";
 import styled from "styled-components";
 
-const Tr = styled.tr`
-  th .cell {
+const Thead = styled.div`
+  .th .cell {
     font-weight: 700;
   }
 `;
 
-const Thead = () => {
+const TheadComponent = () => {
   return (
-    <thead>
-      <Tr>
-        <th>
+    <Thead className="thead">
+      <div className="tr">
+        <div className="th">
           <div className="cell">Create Date</div>
-        </th>
-        <th>
+        </div>
+        <div className="th">
           <div className="cell border">Type</div>
-        </th>
-        <th>
+        </div>
+        <div className="th">
           <div className="cell border">Created By</div>
-        </th>
-      </Tr>
-    </thead>
+        </div>
+      </div>
+    </Thead>
   );
 };
 
-export default Thead;
+export default TheadComponent;
