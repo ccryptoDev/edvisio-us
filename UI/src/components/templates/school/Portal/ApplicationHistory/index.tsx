@@ -1,5 +1,5 @@
 import React from "react";
-import { tabNames } from "./Tabs/config";
+import styled from "styled-components";
 import Table from "./Tables";
 import Documents from "./Documents";
 import History from "./History";
@@ -10,28 +10,65 @@ import {
   parseAddress,
   parseReferenceHistory,
 } from "./parsers";
+import ExpandPanels from "../../../../organisms/Expand/Group";
 
-export const renderTabsContent = ({
-  tabName,
-  userData,
-  transactionsData,
-}: any) => {
-  switch (tabName) {
-    case tabNames.BORROWER_INFO:
-      return <Table items={parseBorrowerInfo(userData)} />;
-    case tabNames.COSIGNER_INFO:
-      return <Table items={parseCosignerInfo(userData)} />;
-    case tabNames.APP_PROFILE:
-      return <Table items={parseAppProfile(userData)} />;
-    case tabNames.ADDRESS_HISTORY:
-      return <Table items={parseAddress(userData)} />;
-    case tabNames.REFERENCE_HISTORY:
-      return <Table items={parseReferenceHistory(userData)} />;
-    case tabNames.APPLICATION_DOCUMENTS:
-      return <Documents />;
-    case tabNames.HISTORY:
-      return <History transactions={transactionsData} />;
-    default:
-      return <></>;
+const Wrapper = styled.div`
+  .expand-list-wrapper {
+    display: flex;
+    padding: 12px;
+    background: #fff;
+    flex-direction: column;
+    gap: 12px;
   }
+  .content-wrapper {
+    margin-top: 18px;
+  }
+`;
+
+const items = ({ userData, transactionsData }: any) => [
+  {
+    id: 1,
+    heading: "Borrower Information",
+    content: <Table items={parseBorrowerInfo(userData)} />,
+  },
+  {
+    id: 2,
+    heading: "Cosigner Information",
+    content: <Table items={parseCosignerInfo(userData)} />,
+  },
+  {
+    id: 3,
+    heading: "Application Documents",
+    content: <Documents />,
+  },
+  {
+    id: 4,
+    heading: "App Profile",
+    content: <Table items={parseAppProfile(userData)} />,
+  },
+  {
+    id: 5,
+    heading: "Address History",
+    content: <Table items={parseAddress(userData)} />,
+  },
+  {
+    id: 6,
+    heading: "Reference History",
+    content: <Table items={parseReferenceHistory(userData)} />,
+  },
+  {
+    id: 7,
+    heading: "History",
+    content: <History transactions={transactionsData} />,
+  },
+];
+
+const ApplicationHistory = ({ userData, transactionsData }: any) => {
+  return (
+    <Wrapper>
+      <ExpandPanels items={items({ userData, transactionsData })} />
+    </Wrapper>
+  );
 };
+
+export default ApplicationHistory;
