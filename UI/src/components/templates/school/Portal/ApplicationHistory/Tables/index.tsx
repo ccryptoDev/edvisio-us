@@ -1,20 +1,34 @@
 import React from "react";
 import styled from "styled-components";
-import { ClassicTable, Cell, smallBordersTd } from "../../../../../atoms/Table";
+import { smallBordersTd } from "../../../../../atoms/Table/Elements";
+import { ClassicTable, Cell } from "../../../../../atoms/Table";
 
 const TableWrapper = styled(ClassicTable)`
   border: 1px solid var(--color-gray-3);
   border-radius: 6px;
   overflow: hidden;
   table {
-    & tr td {
-      ${smallBordersTd}
-      font-size: 12px;
+    & tr:not(:last-child) td {
+      border-bottom: 1px solid var(--color-gray-3);
+    }
+    & tr {
+      &:nth-child(odd) {
+        background: #fff;
+      }
 
-      &:first-child {
-        width: 340px;
-        & .cell {
-          font-weight: 700;
+      &:nth-child(even) {
+        background: var(--color-bg-2);
+      }
+
+      td {
+        ${smallBordersTd}
+        font-size: 12px;
+
+        &:first-child {
+          width: 340px;
+          & .cell {
+            font-weight: 700;
+          }
         }
       }
     }
@@ -23,7 +37,7 @@ const TableWrapper = styled(ClassicTable)`
 
 const InfoTable = ({ items = [] }: any) => {
   return (
-    <TableWrapper>
+    <TableWrapper className="content-wrapper">
       <table>
         <tbody>
           {items.map(({ label, value, id }: any) => {
