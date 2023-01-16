@@ -1,79 +1,83 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { formatDate } from "../../../../../../../utils/formats";
-import { LinkButton } from "../../../../../../atoms/Buttons/Regular";
+import { Button } from "../../../../../../atoms/Buttons/Regular";
 import { ReactComponent as Chevron } from "../../../../../../../assets/svgs/chevron-down.svg";
-import Menu from "../../../../../../organisms/Menu/TableRow";
+import Table from "./InnerTable";
 
-const Link = styled(LinkButton)`
-  text-transform: upperCase;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  max-width: 132px;
-  width: 100%;
-  padding: 8px;
-  &.outlined {
-    background: #fff;
+const Tbody = styled.div`
+  & > .tr {
+    border-top: 1px solid var(--color-gray-3);
   }
-  svg path {
-    fill: var(--color-primary-green-1);
-  }
-`;
-
-const Tr = styled.tr`
   .createdBy {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
   }
 
-  & td .cell {
+  & .tr.active {
+    background: var(--color-gray-4) !important;
+    & .outlined {
+      & svg {
+        transform: rotate(180deg);
+      }
+    }
+  }
+  & .tr .td .cell {
+    color: var(--color-primary-dark-1);
+  }
+  .outlined {
+    padding: 8px;
+    max-width: 130px;
+    width: 100%;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1.2;
+    background: #fff;
+  }
+
+  & .table-menu {
+    grid-column: 1 / -1;
   }
 `;
 
 const Rows = ({ items = [] }: any) => {
   const [open, setOpen] = useState("");
-  const toggleMenu = (name: string) => {
-    if (name !== open) {
-      setOpen(name);
-    } else {
-      setOpen("");
-    }
-  };
 
   return (
-    <tbody>
-      {items.map(({ date, type, createdBy, link, id }: any) => {
+    <Tbody className="tbody">
+      {items.map(({ date, type, createdBy, id, details }: any) => {
         const active = open === id;
         return (
-          <Tr key={id}>
-            {" "}
-            <Menu active={active} onToggle={() => toggleMenu(id)} />
-            <td>
+          <div className={`tr ${active ? "active" : ""}`} key={id}>
+            <div className="td">
               <div className="cell">{formatDate(date)}</div>
-            </td>
-            <td>
+            </div>
+            <div className="td">
               <div className="cell border">{type}</div>
-            </td>
-            <td>
+            </div>
+            <div className="td">
               <div className="cell border createdBy">
                 {createdBy}
-                <Link className="outlined" to={link}>
-                  {" "}
+                <Button className="outlined" onClick={() => setOpen(id)}>
                   <Chevron />
                   View
-                </Link>
+                </Button>
               </div>
-            </td>
-          </Tr>
+            </div>
+            {active && (
+              <div className="td table-menu">
+                <div className="cell">
+                  <Table items={details} />
+                </div>
+              </div>
+            )}
+          </div>
         );
       })}
-    </tbody>
+    </Tbody>
   );
 };
 
