@@ -15,10 +15,10 @@ const DocumentWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--color-bg-2);
   border-radius: 4px;
   border: 1px solid var(--color-gray-3);
   padding: 24px;
+  background: #fff;
 
   .label-wrapper {
     display: flex;
@@ -41,7 +41,7 @@ const DocumentWrapper = styled.div`
 
 const Documents = () => {
   return (
-    <Wrapper>
+    <Wrapper className="content-wrapper">
       {documents.map((item) => {
         return (
           <DocumentWrapper key={item.id}>
