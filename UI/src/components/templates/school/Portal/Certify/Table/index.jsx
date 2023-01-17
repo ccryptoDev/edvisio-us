@@ -6,9 +6,11 @@ import Rows from "./Rows";
 import Thead from "./Thead";
 import { fetchTable } from "../../../../../organisms/Tables/mockApi";
 import { ClassicTable } from "../../../../../atoms/Table";
+import { tableRowChessBackground } from "../../../../../atoms/Table/Elements";
 import { rows } from "./mockRows";
 
 const TableWrapper = styled(ClassicTable)`
+  ${tableRowChessBackground}
   .table-wrapper {
     border-radius: 12px;
     border: 1px solid var(--color-gray-3);
