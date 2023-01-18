@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { smallBordersTd } from "../../../../../atoms/Table";
+import { smallBordersTd } from "../../../../../atoms/Table/Elements";
 
 const Th = styled.th`
   ${smallBordersTd}
