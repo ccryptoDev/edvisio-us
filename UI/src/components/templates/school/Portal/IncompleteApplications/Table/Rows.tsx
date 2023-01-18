@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { formatCurrency, formatDate } from "../../../../../../utils/formats";
-import { smallBordersTd } from "../../../../../atoms/Table";
+import { smallBordersTd } from "../../../../../atoms/Table/Elements";
 import { StyledLink } from "../../../../../atoms/Buttons/Regular";
 import Menu from "../../../../../organisms/Menu/TableRow";
+import { menuButtons } from "../../../../../organisms/Menu/TableRow/config";
 
 const Td = styled.td`
   ${smallBordersTd}
@@ -42,7 +43,11 @@ const Rows = ({ items }: any) => {
       const active = open === screenTracking;
       return (
         <tr key={screenTracking}>
-          <Menu active={active} onToggle={() => toggleMenu(screenTracking)} />
+          <Menu
+            active={active}
+            onToggle={() => toggleMenu(screenTracking)}
+            buttons={menuButtons}
+          />
           <Td>
             <div className="cell">{formatDate(date)}</div>
           </Td>
