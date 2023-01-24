@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { v4 as uuid } from "uuid";
 import { formatCurrency, formatDate } from "../../../../../../../utils/formats";
-import { smallBordersTd } from "../../../../../../atoms/Table";
+import { smallBordersTd } from "../../../../../../atoms/Table/Elements";
 import { StyledLink } from "../../../../../../atoms/Buttons/Regular";
 
 const Td = styled.td`
