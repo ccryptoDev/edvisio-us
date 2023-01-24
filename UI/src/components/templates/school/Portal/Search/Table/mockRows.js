@@ -1,4 +1,6 @@
-export const rows = Array(232).fill({
+import { v4 as uuid } from "uuid";
+
+export const array = Array(232).fill({
   school: "ABC School",
   program: "Tuition Flex",
   startDate: "08/08/2022",
@@ -16,4 +18,11 @@ export const rows = Array(232).fill({
   amountApproved: "12034",
   phoneNumber: "1666234234",
   sentToServicerDate: "08/08/2022",
+});
+
+export const rows = array.map((row) => {
+  return {
+    ...row,
+    screenTrackingId: uuid(),
+  };
 });
