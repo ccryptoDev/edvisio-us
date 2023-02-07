@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { smallBordersTd } from "../../../../../../atoms/Table";
+import { smallBordersTd } from "../../../../../../atoms/Table/Elements";
 
 const Th = styled.th`
   ${smallBordersTd}
@@ -15,31 +15,19 @@ const Thead = () => {
     <tr>
       <Th />
       <Th>
-        <div className="cell">School</div>
+        <div className="cell">Name</div>
       </Th>
       <Th>
-        <div className="border cell">App ID</div>
+        <div className="border cell">Group</div>
       </Th>
       <Th>
-        <div className="border cell">First Name</div>
+        <div className="border cell">Email</div>
       </Th>
       <Th>
-        <div className="border cell">Last Name</div>
+        <div className="border cell">Last Login Date</div>
       </Th>
       <Th>
-        <div className="border cell">Email Address</div>
-      </Th>
-      <Th>
-        <div className="border cell">User Name</div>
-      </Th>
-      <Th>
-        <div className="border cell">SSN</div>
-      </Th>
-      <Th>
-        <div className="border cell">Date of Registration</div>
-      </Th>
-      <Th>
-        <div className="border cell">Credit Debt</div>
+        <div className="border cell">Status</div>
       </Th>
     </tr>
   );
