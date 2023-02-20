@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { BORROWER_INFO } from "../../../components/templates/school/Portal/ApplicationHistory/Tabs/config";
-import Tabs from "../../../components/templates/school/Portal/ApplicationHistory/Tabs";
 import Layout from "../../../layouts/school/Portal";
 import GoBackBtn from "../../../components/molecules/Buttons/GoBack";
 import BreadCrumbs from "../../../components/organisms/BreadCrumbs";
 import { routes } from "../../../routes/School/routes";
 import { H5 } from "../../../components/atoms/Typography";
 import Card from "../../../components/atoms/Cards";
-import { renderTabsContent } from "../../../components/templates/school/Portal/ApplicationHistory";
+import Content from "../../../components/templates/school/Portal/ApplicationHistory";
 import { mockRequest } from "../../../utils/mockRequest";
 import { userMock } from "../../../components/templates/school/Portal/ApplicationHistory/mockData";
 import { transactionsMock } from "../../../components/templates/school/Portal/ApplicationHistory/History/mockData";
@@ -24,12 +22,6 @@ const Wrapper = styled.div`
     display: flex;
     gap: 12px;
   }
-
-  .table-wrapper-card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
 `;
 
 // BREAD CRUMBS BUTTONS
@@ -39,7 +31,6 @@ const items = ({ loanName }: { loanName: string }) => [
 ];
 
 const ApplicationHistory = () => {
-  const [selectedTab, setSelectedTab] = useState(BORROWER_INFO);
   const [userData, setUserData] = useState({});
   const [transactionsData, setTransactionsData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -57,9 +48,6 @@ const ApplicationHistory = () => {
     fetchData();
   }, []);
 
-  const onTabChange = (name: string) => {
-    setSelectedTab(name);
-  };
   return (
     <Layout currentRoute={routes.CERTIFY}>
       <Wrapper>
@@ -69,13 +57,8 @@ const ApplicationHistory = () => {
           <BreadCrumbs items={items({ loanName: "View LN_11667" })} />
         </div>
         <Card className="table-wrapper-card">
-          <Tabs onClick={onTabChange} selectedTab={selectedTab} />
           <Loader loading={loading}>
-            {renderTabsContent({
-              tabName: selectedTab,
-              userData,
-              transactionsData,
-            })}
+            <Content userData={userData} transactionsData={transactionsData} />
           </Loader>
         </Card>
       </Wrapper>
