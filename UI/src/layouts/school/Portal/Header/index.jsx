@@ -13,6 +13,10 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
 
+  .outlined {
+    padding: 12px;
+  }
+
   & .container {
     display: flex;
     align-items: center;
