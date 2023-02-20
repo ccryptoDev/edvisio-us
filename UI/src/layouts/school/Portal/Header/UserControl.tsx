@@ -1,13 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 import { useHistory, Link } from "react-router-dom";
-import DropDown from "../../../../components/organisms/Dropdown/ClickMenu";
 import hand from "../../../../assets/png/hand.png";
 import { useUserData } from "../../../../contexts/admin";
-import { ReactComponent as Settings } from "../../../../assets/svgs/settings.svg";
+import { ReactComponent as LockIcon } from "../../../../assets/svgs/unlocked.svg";
 import { ReactComponent as Logout } from "../../../../assets/svgs/logout.svg";
 import { routes } from "../../../../routes/School/routes";
-import Card from "../../../../components/atoms/Cards";
 
 const Wrapper = styled.div`
   display: flex;
@@ -17,8 +15,7 @@ const Wrapper = styled.div`
     font-size: 10px;
     font-weight: 700;
     color: var(--color-main-2);
-    min-width: 100px;
-    max-width: 130px;
+    width: 150px;
     text-align: center;
     display: flex;
     align-items: center;
@@ -27,6 +24,19 @@ const Wrapper = styled.div`
   button {
     display: flex;
     align-items: center;
+  }
+
+  .user-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    &,
+    & a {
+      color: var(--color-gray-2);
+      text-decoration: none;
+      font-weight: 700;
+    }
   }
   .icon {
     &-logout {
@@ -47,42 +57,6 @@ const Btn = styled.button`
   cursor: pointer;
 `;
 
-const menuItems = [
-  { label: "Certify Application", link: routes.CERTIFY, id: 1 },
-  { label: "Application History", link: routes.APPLICATION_HISTORY, id: 2 },
-  { label: "Reports", link: routes.REPORTS, id: 3 },
-  {
-    label: "Reports All inclusive",
-    link: routes.REPORT_ALL_INCLUSIVE,
-    id: 4,
-  },
-];
-
-const MenuWrapper = styled.ul`
-  list-style: none;
-  a {
-    text-decoration: none;
-    color: var(--color-main-2);
-    font-size: 12px;
-  }
-`;
-
-const Menu = () => {
-  return (
-    <Card>
-      <MenuWrapper>
-        {menuItems.map((item) => {
-          return (
-            <li key={item.id}>
-              <Link to={item.link}>{item.label}</Link>
-            </li>
-          );
-        })}
-      </MenuWrapper>
-    </Card>
-  );
-};
-
 const UserControl = () => {
   const { user } = useUserData();
 
@@ -93,19 +67,33 @@ const UserControl = () => {
       history.push(routes.LOGIN);
     };
     return (
-      <Btn onClick={logoutHandler}>
+      <Btn onClick={logoutHandler} className="user-button">
         <Logout className="icon-logout" />
+        Log Out
       </Btn>
     );
   };
 
+  const userName =
+    user?.data?.firstName && user?.data?.lastName
+      ? `${user?.data?.firstName} ${user?.data?.lastName}`
+      : "";
   return (
     <Wrapper>
       <div className="user-name">
-        <img src={hand} alt="welcome" />
-        Welcome, {user?.data?.firstName} {user?.data?.lastName}
+        {userName ? (
+          <>
+            <img src={hand} alt="welcome" />
+            Welcome, {userName}
+          </>
+        ) : (
+          ""
+        )}
       </div>
-      <DropDown button={<Settings className="icon-settings" />} menu={Menu} />
+      <div className="user-button">
+        <LockIcon />
+        <Link to={routes.FORGOT_PASSWORD}>Reset password</Link>
+      </div>
       <LogoutButton />
     </Wrapper>
   );
