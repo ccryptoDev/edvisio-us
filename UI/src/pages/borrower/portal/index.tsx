@@ -23,7 +23,7 @@ const Page = () => {
 const Component = () => {
   //   const { user } = useUserData();
   return (
-    <StepperProvider steps={() => steps()} initStep={5}>
+    <StepperProvider steps={() => steps()} initStep={1}>
       <Page />
     </StepperProvider>
   );
