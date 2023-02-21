@@ -6,7 +6,13 @@ import Layout from "../../../layouts/school/Portal";
 import { routes } from "../../../routes/School/routes";
 import Card from "../../../components/atoms/Cards";
 import GoBackBtn from "../../../components/molecules/Buttons/GoBack";
-import Table from "../../../components/templates/school/Portal/ViewApplication";
+import ApplicationDetails from "../../../components/templates/school/Portal/ApplicationDetails";
+import {
+  borrowerInformation,
+  coSignerInformation,
+  applicationInformation,
+  certificationInformation,
+} from "../../../components/templates/school/Portal/ApplicationDetails/view.config";
 
 const Wrapper = styled.div`
   padding: 24px 0;
@@ -14,32 +20,43 @@ const Wrapper = styled.div`
   flex-direction: column;
   gap: 24px;
 
-  .bread-crumbs-wrapper {
+  & .bread-crumbs-wrapper {
     display: flex;
     gap: 12px;
+  }
+  & .table-wrapper-card {
+    padding: 12px;
   }
 `;
 
 const items = ({ loanName }) => [
-  { label: "Certify Applications", link: routes.CERTIFY, id: "1" },
+  { label: "View Applications", link: routes.CERTIFY, id: "1" },
   { label: loanName, link: "", id: "2" },
 ];
 
-const CertifyApplication = () => {
+const ViewApplication = () => {
   return (
     <Layout currentRoute={routes.CERTIFY}>
       <Wrapper>
-        <H5>Certify Applications</H5>
+        <H5>View Applications</H5>
         <div className="bread-crumbs-wrapper">
           <GoBackBtn />
           <BreadCrumbs items={items({ loanName: "View LN_11667" })} />
         </div>
         <Card className="table-wrapper-card">
-          <Table />
+          <ApplicationDetails
+            isViewMode
+            fields={{
+              borrowerInformation,
+              coSignerInformation,
+              applicationInformation,
+              certificationInformation,
+            }}
+          />
         </Card>
       </Wrapper>
     </Layout>
   );
 };
 
-export default CertifyApplication;
+export default ViewApplication;
