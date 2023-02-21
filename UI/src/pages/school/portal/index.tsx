@@ -1,15 +1,9 @@
 import React from "react";
-import styled from "styled-components";
-import Layout from "../../../layouts/school/Portal";
-
-const Wrapper = styled.div``;
+import { Redirect } from "react-router-dom";
+import { routes } from "../../../routes/School/routes";
 
 const Portal = () => {
-  return (
-    <Layout currentRoute="">
-      <Wrapper>Portal</Wrapper>
-    </Layout>
-  );
+  return <Redirect to={routes.SEARCH} />;
 };
 
 export default Portal;
