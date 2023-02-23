@@ -5,7 +5,7 @@ import Layout from "../../../../layouts/school/Portal";
 import { routes } from "../../../../routes/School/routes";
 import Card from "../../../../components/atoms/Cards";
 import GoBackBtn from "../../../../components/molecules/Buttons/GoBack";
-import Table from "../../../../components/templates/school/Portal/Admin/ViewApplicaction";
+import Table from "../../../../components/templates/school/Portal/ApplicationDetails";
 
 const Wrapper = styled.div`
   padding: 24px 0;
@@ -28,7 +28,7 @@ const items = ({ loanName }) => [
   { label: loanName, link: "", id: "2" },
 ];
 
-const AdminApplicaction = () => {
+const AdminApplication = () => {
   return (
     <Layout currentRoute={routes.ADMIN}>
       <Wrapper>
@@ -44,4 +44,4 @@ const AdminApplicaction = () => {
   );
 };
 
-export default AdminApplicaction;
+export default AdminApplication;
