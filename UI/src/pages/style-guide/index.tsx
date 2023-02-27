@@ -6,6 +6,7 @@ import Icons from "../../components/style-guide/Icons";
 import Colors from "../../components/style-guide/Colors";
 import Typography from "../../components/style-guide/Typography";
 import BreadCrumbs from "../../components/style-guide/BreadCrumbs";
+import Tables from "../../components/style-guide/Tables";
 
 const Wrapper = styled.div`
   padding: 40px;
@@ -17,6 +18,7 @@ const Guide = () => {
       <Button />
       <BreadCrumbs />
       <Inputs />
+      <Tables />
       <Typography />
       <Icons />
       <Colors />
