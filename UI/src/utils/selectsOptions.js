@@ -6,6 +6,22 @@ export const terms = [
   { value: "24", id: "4", label: "24 months" },
 ];
 
+export const roles = [
+  { value: "school", id: "1", label: "School" },
+  { value: "super admin", id: "2", label: "Admin" },
+];
+
+export const IdType = [
+  { value: "", id: "0", label: "" },
+  { value: "driver's license", id: "1", label: "driver's license" },
+  { value: "passport", id: "2", label: "passport" },
+];
+
+export const status = [
+  { value: "active", id: "1", label: "Active" },
+  { value: "inactive", id: "2", label: "Inactive" },
+];
+
 export const states = [
   {
     id: "0",
